@@ -396,7 +396,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         // Extract the authorization code from the response
         // This code is what we'll exchange for access and refresh tokens
         const { code } = response.params;
-        console.log(code);
 
         // Create form data to send to our token endpoint
         // We include both the code and platform information
@@ -409,8 +408,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           formData.append("platform", "web");
         }
 
-        console.log("request", request);
-
         // Get the code verifier from the request object
         // This is the same verifier that was used to generate the code challenge
         if (request?.codeVerifier) {
@@ -418,7 +415,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         } else {
           console.warn("No code verifier found in request object");
         }
-
         // Send the authorization code to our token endpoint
         // The server will exchange this code with Google for access and refresh tokens
         // For web: credentials are included to handle cookies
@@ -428,6 +424,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           body: formData,
           credentials: isWeb ? "include" : "same-origin", // Include cookies for web
         });
+        console.log("tokenResponse", tokenResponse)
 
         if (isWeb) {
           // For web: The server sets the tokens in HTTP-only cookies
@@ -443,9 +440,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 credentials: "include",
               }
             );
-
+            console.log("sessionResponse", sessionResponse)
             if (sessionResponse.ok) {
               const sessionData = await sessionResponse.json();
+              console.log("sessionData", sessionData)
               setUser(sessionData as AuthUser);
             }
           }

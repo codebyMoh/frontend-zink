@@ -2,9 +2,14 @@ import LoginForm from "@/components/LoginForm";
 import ProfileCard from "@/components/ProfileCard";
 import ProtectedRequestCard from "@/components/ProtectedRequestCard";
 import { useAuth } from "@/context/auth";
+import { useEffect } from "react";
 import { ActivityIndicator, View } from "react-native";
 export default function HomeScreen() {
   const { user, isLoading } = useAuth();
+
+  useEffect(() => {
+    console.log("user", user);
+  }, [user])
 
   if (isLoading) {
     return (

@@ -6,9 +6,6 @@ import { Button, Image, Platform, StyleSheet, Text, View } from "react-native";
 
 export default function ProfileCard() {
   const { signOut, user } = useAuth();
-  useEffect(() => {
-    console.log("user", user)
-  }, [user])
   const [accessTokenExpiration, setAccessTokenExpiration] = useState<
     string | null
   >(null);
@@ -121,23 +118,50 @@ export default function ProfileCard() {
         borderColor: "gray",
       }}
     >
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-        <Image
-          source={{ uri: user?.picture }}
-          style={{
-            width: 50,
-            height: 50,
-            borderRadius: 25,
-          }}
-        />
-
-        <View>
-          <Text className="text-base font-semibold text-start">
-            {`Hi, ${user?.name}`}
-          </Text>
+      <View className="flex-row justify-between">
+        <View className="flex-row items-center gap-2.5">
+          <Image
+            source={{ uri: user?.picture }}
+            style={{
+              width: 50,
+              height: 50,
+              borderRadius: 25,
+            }}
+          />
+            <View>
+              <Text className="text-base font-semibold text-start">
+                {`Hi, ${user?.name}`}
+              </Text>
+              <Text className="text-[14px] color-gray-500">
+                {user?.walletAddressEVM}
+              </Text>
+            </View>
+        </View>
+        <View className="items-end">
           <Text className="text-[14px] color-gray-500">
             {user?.email}
           </Text>
+          <Text className="text-[14px] color-gray-500">
+            {user?.referralId}
+          </Text>
+        </View>
+      </View>
+
+      <View className="w-full flex-row bg-[#5EDE99] rounded-lg h-36 px-6 py-[26]">
+        <View className="flex gap-2 w-1/2">
+          <View>
+            <Text className="text-white font-semibold text-base">Balance: USDT</Text>
+            <Text className="text-white font-bold text-4xl">$0.00</Text>
+          </View>
+          <View className="flex-row gap-1 items-center">
+            <Text className="text-white font-semibold text-base">Yield Return: </Text>
+            <Text className="text-white font-bold text-base"> $0.00</Text>
+          </View>
+        </View>
+        <View className="w-1/2 flex items-end justify-center">
+            <View className="w-[73px] h-8 items-center justify-center bg-[#FFFFFF] rounded-lg">
+              <Text className="text-[#00CB6A] font-bold text-xs">+ 0%</Text>
+            </View>
         </View>
       </View>
 
