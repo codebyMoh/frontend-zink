@@ -120,6 +120,7 @@ export default function ProfileCard() {
     >
       <View className="flex-row justify-between">
         <View className="flex-row items-center gap-2.5">
+          {user?.picture ? 
           <Image
             source={{ uri: user?.picture }}
             style={{
@@ -127,15 +128,19 @@ export default function ProfileCard() {
               height: 50,
               borderRadius: 25,
             }}
-          />
-            <View>
-              <Text className="text-base font-semibold text-start">
-                {`Hi, ${user?.name}`}
-              </Text>
-              <Text className="text-[14px] color-gray-500">
-                {user?.walletAddressEVM}
-              </Text>
-            </View>
+          /> :
+          <View className="w-[50px] h-[50px] rounded-full items-center justify-center font-semibold text-xl text-white bg-slate-600">
+            {user?.name?.charAt(0)}
+          </View>
+          }
+          <View>
+            <Text className="text-base font-semibold text-start">
+              {`Hi, ${user?.name}`}
+            </Text>
+            <Text className="text-[14px] color-gray-500">
+              {user?.walletAddressEVM}
+            </Text>
+          </View>
         </View>
         <View className="items-end">
           <Text className="text-[14px] color-gray-500">

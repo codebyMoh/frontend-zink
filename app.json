@@ -1,16 +1,16 @@
 {
   "expo": {
     "name": "Zink",
-    "slug": "Zink",
+    "slug": "zink",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "Zink",
+    "scheme": "zink",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.Zink.app",
+      "bundleIdentifier": "com.zink.app",
       "usesAppleSignIn": true,
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
