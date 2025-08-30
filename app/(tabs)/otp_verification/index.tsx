@@ -1,21 +1,20 @@
 import { AntDesign } from "@expo/vector-icons";
-import { Stack, useRouter } from "expo-router";
+import { Stack, router } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    Keyboard,
-    NativeSyntheticEvent,
-    SafeAreaView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TextInputKeyPressEventData,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Keyboard,
+  NativeSyntheticEvent,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TextInputKeyPressEventData,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 export default function OTPScreen() {
-  const router = useRouter();
   const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [resendTimer, setResendTimer] = useState<number>(60);

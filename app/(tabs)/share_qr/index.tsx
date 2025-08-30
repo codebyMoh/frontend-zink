@@ -1,17 +1,16 @@
 import { AntDesign } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
-import { Stack, useRouter } from "expo-router";
+import { Stack, router } from "expo-router";
 import {
-    SafeAreaView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import QRCodeSvg from "react-native-qrcode-svg";
 
 export default function ShareQRCodeScreen() {
-  const router = useRouter();
   const walletAddress = "0xE947D41FC4459818f8697AdAdf0e5C4606BB5f73";
   const userName = "meetdesai10";
 

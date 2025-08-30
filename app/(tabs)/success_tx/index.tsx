@@ -1,18 +1,17 @@
 import { AntDesign } from "@expo/vector-icons";
-import { Stack, useLocalSearchParams, useRouter } from "expo-router";
+import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useEffect, useRef } from "react";
 import {
-    Animated,
-    Easing,
-    SafeAreaView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Animated,
+  Easing,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 export default function TransactionSuccessScreen() {
-  const router = useRouter();
   const scaleAnim = useRef(new Animated.Value(0)).current; // For icon scale animation
   const opacityAnim = useRef(new Animated.Value(0)).current; // For text fade-in animation
 

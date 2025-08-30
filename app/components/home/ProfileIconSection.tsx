@@ -1,5 +1,5 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { router } from "expo-router";
 import React, { useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
@@ -22,7 +22,6 @@ const ProfileIconSection: React.FC<PeopleListWithToggleProps> = ({
   people,
   initialVisibleCount = 8,
 }) => {
-  const router = useRouter();
   const [showAll, setShowAll] = useState<boolean>(false);
 
   const visiblePeople = showAll ? people : people.slice(0, initialVisibleCount);

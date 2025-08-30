@@ -1,18 +1,17 @@
 import { AntDesign } from "@expo/vector-icons"; // For icons
-import { Stack, useRouter } from "expo-router"; // For navigation
+import { Stack, router } from "expo-router"; // For navigation
 import { useState } from "react";
 import {
-    ActivityIndicator,
-    SafeAreaView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 export default function ForgotPasswordScreen() {
-  const router = useRouter();
   const [email, setEmail] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [successMessage, setSuccessMessage] = useState<string>("");

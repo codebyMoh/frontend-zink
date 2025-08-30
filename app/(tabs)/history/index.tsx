@@ -1,14 +1,14 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { Stack, useRouter } from "expo-router"; // Import Stack for header options
+import { router, Stack } from "expo-router"; // Import Stack for header options
 import React, { useEffect, useState } from "react"; // Import useState and useEffect
 import {
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 // Define an interface for a single transaction item
@@ -316,7 +316,6 @@ const dummyTransactions: Transaction[] = [
 ];
 
 const TransactionHistoryScreen: React.FC = () => {
-  const router = useRouter();
   const [searchText, setSearchText] = useState<string>("");
   const [filteredTransactions, setFilteredTransactions] =
     useState<Transaction[]>(dummyTransactions);

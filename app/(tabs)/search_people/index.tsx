@@ -1,15 +1,15 @@
 import { AntDesign, MaterialCommunityIcons } from "@expo/vector-icons";
-import { Stack, useRouter } from "expo-router";
+import { Stack, router } from "expo-router";
 import { useState } from "react";
 import {
-    Platform,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 // Interface for suggested category items
@@ -30,7 +30,6 @@ interface ContactItem {
 }
 
 export default function SearchPaymentsScreen() {
-  const router = useRouter();
   const [searchText, setSearchText] = useState<string>("");
 
   const allPeople: ContactItem[] = [

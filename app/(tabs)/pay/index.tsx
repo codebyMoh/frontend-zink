@@ -1,5 +1,5 @@
 import { AntDesign } from "@expo/vector-icons";
-import { Stack, useRouter } from "expo-router";
+import { Stack, router } from "expo-router";
 import { useState } from "react";
 import {
   ActivityIndicator,
@@ -12,7 +12,6 @@ import {
 } from "react-native";
 
 export default function PaymentScreen() {
-  const router = useRouter();
   const [amount, setAmount] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState<boolean>(false);

@@ -1,5 +1,5 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { router } from "expo-router";
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
@@ -12,7 +12,6 @@ interface Option {
 }
 
 const MoreOptions: React.FC = () => {
-  const router = useRouter();
 
   // Explicitly type the options array using the Option interface
   const options: Option[] = [
@@ -68,7 +67,7 @@ const styles = StyleSheet.create({
   },
   optionText: {
     color: "#000", // Changed to black text color
-    fontSize: 20,
+    fontSize: 18,
     flex: 1,
   },
 });

@@ -1,19 +1,18 @@
 import { AntDesign } from "@expo/vector-icons"; // For icons
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Stack, useRouter } from "expo-router"; // For navigation
+import { router, Stack } from "expo-router"; // For navigation
 import { useState } from "react";
 import {
-    ActivityIndicator,
-    SafeAreaView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 export default function LoginScreen() {
-  const router = useRouter();
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string>("");

@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { CameraView } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
-import { Stack, useRouter } from "expo-router";
+import { Stack, router } from "expo-router";
 import { useState } from "react";
 import {
   Dimensions,
@@ -15,7 +15,6 @@ import {
 const { width } = Dimensions.get("window");
 
 export default function QrScan() {
-  const router = useRouter();
   const [torchOn, setTorchOn] = useState(false);
   const [scanned, setScanned] = useState(false);
   const handleBarcodeScanned = ({ data }: { data: string }) => {
