@@ -4,6 +4,7 @@ import { Stack, router } from "expo-router"; // For navigation
 import { useState } from "react";
 import {
   ActivityIndicator,
+  Image,
   SafeAreaView,
   StyleSheet,
   Text,
@@ -162,14 +163,13 @@ export default function SignUpScreen() {
         <TouchableOpacity
           style={styles.googleButton}
           onPress={handleGoogleSignUp}
+          disabled={isLoading} // Disable button when loading
         >
-          <AntDesign
-            name="google"
-            size={24}
-            color="#fff"
+          <Image
+            source={require("../../../assets/images/login/google.png")}
             style={styles.googleIcon}
           />
-          <Text style={styles.googleButtonText}>Sign up with Google</Text>
+          <Text style={styles.googleButtonText}>Continue with Google</Text>
         </TouchableOpacity>
 
         {/* Apple Sign Up Button */}
@@ -183,7 +183,7 @@ export default function SignUpScreen() {
             color="#fff"
             style={styles.appleIcon}
           />
-          <Text style={styles.appleButtonText}>Sign up with Apple</Text>
+          <Text style={styles.appleButtonText}>Continue with Apple</Text>
         </TouchableOpacity>
 
         {/* Login Text */}
@@ -289,25 +289,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   googleButton: {
-    backgroundColor: "#DB4437", // Google's brand red color
+    backgroundColor: "#fff",
     borderRadius: 15,
     paddingVertical: 15,
     width: "100%",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 15, // Space between social buttons
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: "#ccc",
     elevation: 3,
   },
   googleIcon: {
+    width: 24, // Set the width for the image
+    height: 24, // Set the height for the image
     marginRight: 10,
   },
   googleButtonText: {
-    color: "#fff",
+    color: "#000",
     fontSize: 18,
     fontWeight: "bold",
   },
