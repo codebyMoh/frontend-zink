@@ -56,7 +56,6 @@ export default function ShareQRCodeScreen() {
           <MaterialCommunityIcons name="qrcode-scan" size={24} color="black" />
           <Text
             style={styles.scannerButtonText}
-            onPress={() => router.push("/scan_qr")}
           >
             Open scanner
           </Text>
