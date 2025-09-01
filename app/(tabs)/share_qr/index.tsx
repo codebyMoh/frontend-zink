@@ -1,8 +1,12 @@
 import { AntDesign } from "@expo/vector-icons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import Octicons from "@expo/vector-icons/Octicons";
-import { Stack, router } from "expo-router";
+import * as MediaLibrary from "expo-media-library";
+import { router } from "expo-router";
+import * as Sharing from "expo-sharing";
+import { useRef, useState } from "react";
 import {
+  ActivityIndicator,
   SafeAreaView,
   StyleSheet,
   Text,
@@ -10,14 +14,46 @@ import {
   View,
 } from "react-native";
 import QRCodeSvg from "react-native-qrcode-svg";
+import Toast from "react-native-toast-message";
+import ViewShot from "react-native-view-shot";
 
 export default function ShareQRCodeScreen() {
   const walletAddress = "0xE947D41FC4459818f8697AdAdf0e5C4606BB5f73";
   const userName = "meetdesai10";
+  const [isDownloading, setIsDownloading] = useState(false);
+  const viewShotRef = useRef<string | any>(null);
+
+  const handleDownloadQR = async () => {
+    try {
+      setIsDownloading(true);
+      const uri = await viewShotRef.current.capture();
+
+      await MediaLibrary.requestPermissionsAsync();
+      await MediaLibrary.saveToLibraryAsync(uri);
+
+      Toast.show({
+        type: "success",
+        text1: "QR Downloaded",
+        text2: "Saved to gallery",
+      });
+    } catch (error) {
+      console.log("Error saving QR:", error);
+    } finally {
+      setIsDownloading(false); // back to icon
+    }
+  };
+
+  const handleShareQR = async () => {
+    try {
+      const uri = await viewShotRef.current.capture();
+      await Sharing.shareAsync(uri);
+    } catch (error) {
+      console.log("Error sharing QR:", error);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
-      <Stack.Screen options={{ headerShown: false }} />
       {/* Header */}
       <TouchableOpacity style={styles.backButton}>
         <AntDesign
@@ -26,41 +62,50 @@ export default function ShareQRCodeScreen() {
           color="black"
           onPress={() => router.back()}
         />
-        <Octicons name="download" size={24} color="black" />
+        {isDownloading ? (
+          <ActivityIndicator size={24} color="black" />
+        ) : (
+          <Octicons
+            onPress={handleDownloadQR}
+            name="download"
+            size={24}
+            color="black"
+          />
+        )}
       </TouchableOpacity>
 
-      <View style={styles.card}>
-        <Text style={styles.userName}>{userName}</Text>
+      <ViewShot ref={viewShotRef} options={{ format: "png", quality: 1 }}>
+        <View style={styles.card}>
+          <Text style={styles.userName}>{userName}</Text>
+          <View style={styles.qrContainer}>
+            <QRCodeSvg
+              value={walletAddress}
+              size={220}
+              color="black"
+              backgroundColor="white"
+              logo={require("../../../assets/images/logos/Zink-Qr-Logo.png")}
+              logoSize={60}
+              logoMargin={3}
+              logoBackgroundColor="white"
+              logoBorderRadius={30}
+            />
+          </View>
 
-        <View style={styles.qrContainer}>
-          <QRCodeSvg
-            value={walletAddress}
-            size={220}
-            color="black"
-            backgroundColor="white"
-            logo={require("../../../assets/images/logos/Zink-Logo.png")}
-            logoSize={80}
-            logoMargin={0}
-            logoBackgroundColor="white"
-            logoBorderRadius={40}
-          />
+          <Text style={styles.walletText}>Id: 97AdAdf0e5C4606BB5f7</Text>
         </View>
+      </ViewShot>
 
-        <Text style={styles.walletText}>Id: 97AdAdf0e5C4606BB5f7</Text>
-      </View>
+      {/* Bottom Buttons */}
       <View style={styles.bottomButtons}>
         <TouchableOpacity
           style={styles.scannerButton}
           onPress={() => router.push("/scan_qr")}
         >
           <MaterialCommunityIcons name="qrcode-scan" size={24} color="black" />
-          <Text
-            style={styles.scannerButtonText}
-          >
-            Open scanner
-          </Text>
+          <Text style={styles.scannerButtonText}>Open scanner</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.shareButton}>
+
+        <TouchableOpacity style={styles.shareButton} onPress={handleShareQR}>
           <MaterialCommunityIcons name="share-variant" size={24} color="#fff" />
           <Text style={styles.shareButtonText}>Share QR code</Text>
         </TouchableOpacity>
