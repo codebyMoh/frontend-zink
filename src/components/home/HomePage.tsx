@@ -237,7 +237,7 @@ export default function WalletHomePage() {
         <View style={styles.actionItemContainer}>
           <TouchableOpacity
             style={styles.actionIconButton}
-            // onPress={() => router.push("/scan_qr")}
+            onPress={() => router.push("/scan_qr")}
           >
             <MaterialCommunityIcons
               name="qrcode-scan"
