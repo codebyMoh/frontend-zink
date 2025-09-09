@@ -79,12 +79,12 @@ export default function ProfileScreen() {
         </TouchableOpacity>
 
         {/* QR Code */}
-        <TouchableOpacity style={styles.option}>
+        <TouchableOpacity style={styles.option} onPress={()=>router.push("/share_qr")} >
           <AntDesign name="qrcode" size={24} color="#4CAF50" />
           <View>
             <Text style={styles.optionText}>Your QR code</Text>
             <Text style={styles.smallText}>
-              Use to receive money from any UPI app
+              Use to receive money from ZINk
             </Text>
           </View>
         </TouchableOpacity>

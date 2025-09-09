@@ -226,7 +226,7 @@ export default function WalletHomePage() {
         </View>
         <TouchableOpacity
           style={styles.cardMenuAbsolute}
-          //   onPress={() => router.push("/share_qr")}
+            onPress={() => router.push("/share_qr")}
         >
           <MaterialCommunityIcons name="qrcode-scan" size={24} color="white" />
         </TouchableOpacity>
