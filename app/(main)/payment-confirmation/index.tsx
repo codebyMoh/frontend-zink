@@ -22,8 +22,8 @@ export default function PaymentConfirmationScreen() {
   const params = useLocalSearchParams();
   const amount = params.amount as string || "0.00";
   const recipient = params.recipient as string || "Lance Whitney";
-  const recipientAddress = "0xF62177704d06a8C9d97622f44fbC9EBC6a667ACA"; // Default test recipient
-  
+  const recipientAddress = (params.recipientAddress as string || "0xF62177704d06a8C9d97622f44fbC9EBC6a667ACA") as `0x${string}`;
+
   const [isLoading, setIsLoading] = useState(false);
   const [balances, setBalances] = useState<BalanceState>({
     eth: "0",

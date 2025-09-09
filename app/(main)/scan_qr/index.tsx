@@ -15,15 +15,33 @@ import {
 const { width } = Dimensions.get("window");
 
 export default function QrScan() {
-  const [torchOn, setTorchOn] = useState(false);
-    const [scanned, setScanned] = useState(false);
-    const [permission, requestPermission] = useCameraPermissions();
+const [torchOn, setTorchOn] = useState(false);
+const [scanned, setScanned] = useState(false);
+const [permission, requestPermission] = useCameraPermissions();
+
   const handleBarcodeScanned = ({ data }: { data: string }) => {
     if (scanned) return;
     console.log("QR Data:", data);
     setScanned(true);
     // Linking.openURL(data).catch(() => {});
-    router.push("/pay");
+    
+    let recipientAddress = data;
+
+    // - ethereum:0xF62177704d06a8C9d97622f44fbC9EBC6a667ACA
+    // - just the address: 0xF62177704d06a8C9d97622f44fbC9EBC6a667ACA
+    if (data.includes('ethereum:')) {
+    recipientAddress = data.split('ethereum:')[1];
+  } else if (data.includes('0x')) {
+    const addressMatch = data.match(/0x[a-fA-F0-9]{40}/);
+    if (addressMatch) {
+      recipientAddress = addressMatch[0];
+    }
+  }
+    
+    router.push({
+    pathname: "/pay",
+    params: { recipientAddress }
+  });
   };
 
   // upload image and scan the qr code

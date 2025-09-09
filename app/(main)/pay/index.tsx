@@ -1,5 +1,5 @@
 import { AntDesign } from "@expo/vector-icons";
-import { Stack, router } from "expo-router";
+import { Stack, router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import {
   ActivityIndicator,
@@ -16,6 +16,8 @@ export default function PaymentScreen() {
   const [message, setMessage] = useState("Here's the money I owe you.");
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const params = useLocalSearchParams();
+  const recipientAddress = params.recipientAddress as string || "0xF62177704d06a8C9d97622f44fbC9EBC6a667ACA";
 
   async function payHandler() {
     try {
@@ -40,7 +42,8 @@ export default function PaymentScreen() {
         pathname: "/payment-confirmation",
         params: {
           amount: amount,
-          recipient: "Lance Whitney",
+          recipient: "Lance Whitney", //todo: make this dynamic
+           recipientAddress: recipientAddress,
           message: message
         }
       });
