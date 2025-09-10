@@ -1,9 +1,11 @@
+import { scanUserById } from "@/services/api";
 import { Ionicons } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
 import { Stack, router } from "expo-router";
 import { useEffect, useState } from "react";
 import {
+  Alert,
   Dimensions,
   SafeAreaView,
   StyleSheet,
@@ -19,30 +21,38 @@ const [torchOn, setTorchOn] = useState(false);
 const [scanned, setScanned] = useState(false);
 const [permission, requestPermission] = useCameraPermissions();
 
-  const handleBarcodeScanned = ({ data }: { data: string }) => {
-    if (scanned) return;
-    console.log("QR Data:", data);
-    setScanned(true);
-    // Linking.openURL(data).catch(() => {});
+  const handleBarcodeScanned = async ({ data }: { data: string }) => {
+  if (scanned) return;
+  console.log("QR Data:", data);
+  setScanned(true);
+  
+  try {
+    const userId = data.trim();
     
-    let recipientAddress = data;
-
-    // - ethereum:0xF62177704d06a8C9d97622f44fbC9EBC6a667ACA
-    // - just the address: 0xF62177704d06a8C9d97622f44fbC9EBC6a667ACA
-    if (data.includes('ethereum:')) {
-    recipientAddress = data.split('ethereum:')[1];
-  } else if (data.includes('0x')) {
-    const addressMatch = data.match(/0x[a-fA-F0-9]{40}/);
-    if (addressMatch) {
-      recipientAddress = addressMatch[0];
+    const response = await scanUserById(userId);
+    
+    if (response.success && response.data.user) {
+      const user = response.data.user;
+      
+      router.push({
+        pathname: "/pay",
+        params: { 
+          recipientAddress: user.smartWalletAddress,
+          recipientId: user._id,
+          recipientName: user.name,
+          recipientUsername: user.userName
+        }
+      });
+    } else {
+      Alert.alert("Error", "User not found");
+      setScanned(false);
     }
+  } catch (error) {
+    console.error("Error scanning user:", error);
+    Alert.alert("Error", "Failed to find user. Please try again.");
+    setScanned(false);
   }
-    
-    router.push({
-    pathname: "/pay",
-    params: { recipientAddress }
-  });
-  };
+};
 
   // upload image and scan the qr code
   const handlePickImage = async () => {

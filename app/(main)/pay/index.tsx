@@ -1,3 +1,4 @@
+import { useSmartAccountClient, useUser } from "@account-kit/react-native";
 import { AntDesign } from "@expo/vector-icons";
 import { Stack, router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
@@ -18,6 +19,8 @@ export default function PaymentScreen() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const params = useLocalSearchParams();
   const recipientAddress = params.recipientAddress as string || "0xF62177704d06a8C9d97622f44fbC9EBC6a667ACA";
+  const recipient = (params.recipientName as string) || (params.recipientUsername as string) || "Unknown User";
+
 
   async function payHandler() {
     try {
@@ -42,9 +45,10 @@ export default function PaymentScreen() {
         pathname: "/payment-confirmation",
         params: {
           amount: amount,
-          recipient: "Lance Whitney", //todo: make this dynamic
-           recipientAddress: recipientAddress,
-          message: message
+          message: message,
+          recipient: params.recipientName || params.recipientUsername,
+          recipientAddress: params.recipientAddress,
+          recipientId: params.recipientId 
         }
       });
       
@@ -72,17 +76,16 @@ export default function PaymentScreen() {
         {/* Avatar + Name */}
         <View style={styles.userInfo}>
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>LW</Text>
+            <Text style={styles.avatarText}>{recipient?.charAt(0)?.toUpperCase()}</Text>
           </View>
-          <Text style={styles.name}>Paying Lance Whitney</Text>
-          <Text style={styles.address}>0xF62177...667ACA</Text>
+          <Text style={styles.name}>{recipient}</Text>
+          <Text style={styles.address}>{recipientAddress}</Text>
         </View>
 
         {/* Amount Input */}
         <View style={styles.amountSection}>
           <Text style={styles.sectionLabel}>Amount</Text>
           <View style={styles.amountInputContainer}>
-            <Text style={styles.dollar}>$</Text>
             <TextInput
               style={styles.amountInput}
               placeholder="0.00"
@@ -142,7 +145,7 @@ export default function PaymentScreen() {
             </View>
           ) : (
             <Text style={styles.payButtonText}>
-              Continue • ${amount || "0.00"}
+              Continue • {amount || "0.00"} USDC
             </Text>
           )}
         </TouchableOpacity>

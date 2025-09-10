@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { useUser, useSmartAccountClient } from "@account-kit/react-native";
 import { encodeFunctionData, formatEther, parseAbi } from "viem";
+import { storeTransaction } from "@/services/api";
 
 interface BalanceState {
   eth: string;
@@ -166,6 +167,17 @@ const executePayment = async () => {
       setIsLoading(true);
       const result = await executeSmartAccountPayment();
       
+      try {
+        await storeTransaction({
+          recipientId: params.recipientId as string,
+          amount: paymentAmount,
+          tx: result?.transactionHash || result?.userOpHash || '',
+          currency: 'USDC'
+        });
+      } catch (error) {
+        console.error('Failed to store transaction:', error);
+      }
+
       router.replace({
         pathname: "/success_tx",
         params: {
@@ -226,7 +238,7 @@ const executePayment = async () => {
 
           <View style={styles.amountSection}>
             <Text style={styles.amountLabel}>Amount</Text>
-            <Text style={styles.amount}>${amount} USDC</Text>
+            <Text style={styles.amount}>{amount} USDC</Text>
           </View>
 
           <View style={styles.messageSection}>
@@ -240,7 +252,7 @@ const executePayment = async () => {
           <Text style={styles.balanceTitle}>Your Balance</Text>
           <View style={styles.balanceRow}>
             <Text style={styles.balanceLabel}>USDC:</Text>
-            <Text style={styles.balanceValue}>${balances.usdc}</Text>
+            <Text style={styles.balanceValue}>{balances.usdc}</Text>
           </View>
           <View style={styles.balanceRow}>
             <Text style={styles.balanceLabel}>ETH (for gas):</Text>
@@ -279,7 +291,7 @@ const executePayment = async () => {
             </View>
           ) : (
             <Text style={styles.confirmButtonText}>
-              Confirm & Pay ${amount}
+              Confirm & Pay {amount} USDC
             </Text>
           )}
         </TouchableOpacity>

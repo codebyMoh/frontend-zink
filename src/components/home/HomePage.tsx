@@ -15,6 +15,7 @@ import { parseAbi } from "viem";
 import MoreOptions from "./Bottom";
 import OffersAndRewards from "./OffersAndRewards";
 import ProfileIconSection from "./ProfileIconSection";
+import { TokenManager } from "@/services/tokenManager";
 
 interface BalanceState {
   usdc: string;
@@ -134,6 +135,18 @@ export default function WalletHomePage() {
   });
 
   const account = client?.account;
+
+  const [userName, setUserName] = useState("User"); // fallback name
+
+useEffect(() => {
+  const loadUserData = async () => {
+    const userData = await TokenManager.getUserData();
+    if (userData?.userName) {
+      setUserName(userData.userName);
+    }
+  };
+  loadUserData();
+}, []);
   
   // Base mainnet USDC contract address
   const BASE_USDC = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
@@ -201,7 +214,7 @@ export default function WalletHomePage() {
           style={styles.profileIcon}
           onPress={() => router.push("/profile")}
         >
-          <Text style={styles.profileText}>M</Text>
+          <Text style={styles.profileText}>{userName?.charAt(0)?.toUpperCase()}</Text>
         </TouchableOpacity>
       </View>
 

@@ -14,7 +14,9 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useAuthenticate } from "@account-kit/react-native";
+import { useAuthenticate, useSmartAccountClient, useUser } from "@account-kit/react-native";
+import { registerUser } from "@/services/api";
+import { TokenManager } from "@/services/tokenManager";
 
 export default function OTPScreen() {
   const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
@@ -22,9 +24,17 @@ export default function OTPScreen() {
   const [resendTimer, setResendTimer] = useState<number>(60);
   const [isResending, setIsResending] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [shouldRegister, setShouldRegister] = useState<boolean>(false);
 
   const { email } = useLocalSearchParams<{ email: string }>();
   const { authenticate, authenticateAsync } = useAuthenticate();
+
+  const userData = useUser();
+
+  const { client } = useSmartAccountClient({
+    type: "ModularAccountV2",
+  });
+
 
   const inputRefs = useRef<Array<TextInput | null>>([]);
 
@@ -43,6 +53,55 @@ export default function OTPScreen() {
       }
     };
   }, [isResending, resendTimer]);
+  
+  
+useEffect(() => {
+  const handleRegistration = async () => {
+    if (!shouldRegister) return;
+
+    if (!userData || !client?.account?.address) {
+      return;
+    }
+
+    try {
+      const smartWalletAddress = client.account.address;
+
+      if (userData.email && userData.solanaAddress && smartWalletAddress) {
+
+        const response = await registerUser({
+          email: userData.email,
+          addressEvm: userData.address,
+          addressSolana: userData.solanaAddress,
+          smartWalletAddress: smartWalletAddress,
+          userId: userData.userId,
+          orgId: userData.orgId,
+        });
+
+        await TokenManager.saveToken(response.data.token);
+        await TokenManager.saveUserData(response.data.user);
+
+        console.log("Registration successful:", response);
+        router.replace("/");
+      } else {
+        console.error("Missing required user data:", {
+          email: userData?.email,
+          solanaAddress: userData?.solanaAddress,
+          smartWalletAddress,
+        });
+        setErrorMessage("Failed to get user information. Please try again.");
+      }
+    } catch (registrationError) {
+      console.error("Backend registration failed:", registrationError);
+      setErrorMessage("Registration failed. Please try again.");
+    } finally {
+      setIsLoading(false);
+      setShouldRegister(false);
+    }
+  };
+
+  handleRegistration();
+}, [shouldRegister, client?.account?.address, userData]); // Added userData to dependencies
+
 
   const handleOtpChange = (text: string, index: number) => {
     const newOtp = [...otp];
@@ -78,16 +137,16 @@ export default function OTPScreen() {
     }
 
     try {
-      authenticate({
+      await authenticate({
         otpCode: fullOtp,
         type: "otp",
       });
-
-      router.replace("/");
+      
+      //trigger the registration process
+      setShouldRegister(true);
     } catch (error) {
       console.error("OTP verification failed:", error);
       setErrorMessage("Invalid OTP. Please try again.");
-    } finally {
       setIsLoading(false);
     }
   };

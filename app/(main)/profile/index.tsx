@@ -1,3 +1,4 @@
+import { TokenManager } from "@/services/tokenManager";
 import { useLogout, useUser } from "@account-kit/react-native";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Feather from "@expo/vector-icons/Feather";
@@ -8,6 +9,7 @@ import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
+import { useEffect, useState } from "react";
 import {
   ImageBackground,
   ScrollView,
@@ -18,12 +20,24 @@ import {
 } from "react-native";
 
 export default function ProfileScreen() {
-  const userName = "Jhone Doe";
   const user = useUser()
 // console.log("User data:", user);
   const { logout } = useLogout();
 
+const [userName, setUserName] = useState("Jhone Doe"); // fallback name
+
+useEffect(() => {
+  const loadUserData = async () => {
+    const userData = await TokenManager.getUserData();
+    if (userData?.userName) {
+      setUserName(userData.userName);
+    }
+  };
+  loadUserData();
+}, []);
+
   async function logoutHandler() {
+    await TokenManager.clearAll()
     await AsyncStorage.clear();
     await logout();
     router.dismissAll();
