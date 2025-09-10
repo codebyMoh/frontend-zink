@@ -21,7 +21,6 @@ import {
 
 export default function ProfileScreen() {
   const user = useUser()
-// console.log("User data:", user);
   const { logout } = useLogout();
 
 const [userName, setUserName] = useState("Jhone Doe"); // fallback name

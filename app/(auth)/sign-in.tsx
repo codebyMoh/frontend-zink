@@ -38,7 +38,6 @@ export default function SignIn() {
                 emailMode: "otp",
             });
 
-            // console.log("OTP sent successfully, navigating to OTP modal");
             
             router.navigate({
                 pathname: "/otp-verification",
@@ -117,7 +116,7 @@ const styles = StyleSheet.create({
         backgroundColor: "#fff",
         justifyContent: "center",
         alignItems: "center",
-        padding: 20,
+        paddingHorizontal: 20,
     },
     content: {
         width: "100%",

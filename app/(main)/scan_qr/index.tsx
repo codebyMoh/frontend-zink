@@ -22,7 +22,7 @@ export default function QrScan() {
   const [permission, requestPermission] = useCameraPermissions();
 
   const handleBarcodeScanned = async ({ data }: { data: string }) => {
-    console.log("QR Data:", data);
+    // console.log("QR Data:", data);
     if (scanned) return;
     setScanned(true);
 

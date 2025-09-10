@@ -1,6 +1,6 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { router, Stack } from "expo-router"; // Import Stack for header options
-import React, { useEffect, useState } from "react"; // Import useState and useEffect
+import { router, Stack } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
   SafeAreaView,
   ScrollView,
@@ -9,9 +9,11 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  ActivityIndicator,
+  Alert,
 } from "react-native";
+import { getSentTransactions, getReceivedTransactions, ApiTransaction } from "@/services/api/transaction";
 
-// Define an interface for a single transaction item
 interface Transaction {
   id: string;
   name: string;
@@ -19,322 +21,116 @@ interface Transaction {
   amount: string;
   status: "success" | "failed";
   initial: string;
-  bgColor: string; // Background color for the initial icon
+  bgColor: string;
+  txHash: string;
+  currency: string;
 }
 
-// Dummy data for transactions to simulate history
-const dummyTransactions: Transaction[] = [
-  {
-    id: "9",
-    name: "GADGETKING",
-    date: "23 August",
-    amount: "200", // Changed from ₹ to
-    status: "success",
-    initial: "G",
-    bgColor: "#56a5ebff", // Example color
-  },
-  {
-    id: "10",
-    name: "BADRI LAL",
-    date: "23 August",
-    amount: "120", // Changed from ₹ to
-    status: "failed",
-    initial: "B",
-    bgColor: "#f79951ff", // Example color
-  },
-  // --- Added 30 more dummy transactions below ---
-  {
-    id: "11",
-    name: "Grocery Store",
-    date: "22 August",
-    amount: "550", // Changed from ₹ to
-    status: "success",
-    initial: "G",
-    bgColor: "#56a5ebff",
-  },
-  {
-    id: "12",
-    name: "Online Subscription",
-    date: "22 August",
-    amount: "99", // Changed from ₹ to
-    status: "failed",
-    initial: "O",
-    bgColor: "#a164f1ff",
-  },
-  {
-    id: "13",
-    name: "Coffee Shop",
-    date: "21 August",
-    amount: "180", // Changed from ₹ to
-    status: "success",
-    initial: "C",
-    bgColor: "#57a2e4ff",
-  },
-  {
-    id: "14",
-    name: "Electricity Bill",
-    date: "21 August",
-    amount: "1,250", // Changed from ₹ to
-    status: "failed",
-    initial: "E",
-    bgColor: "#a7e75eff",
-  },
-  {
-    id: "15",
-    name: "Mobile Recharge",
-    date: "20 August",
-    amount: "399", // Changed from ₹ to
-    status: "success",
-    initial: "M",
-    bgColor: "#e66e84ff",
-  },
-  {
-    id: "16",
-    name: "Restaurant Dinner",
-    date: "20 August",
-    amount: "850", // Changed from ₹ to
-    status: "success",
-    initial: "R",
-    bgColor: "#da7b66ff",
-  },
-  {
-    id: "17",
-    name: "Taxi Ride",
-    date: "19 August",
-    amount: "230", // Changed from ₹ to
-    status: "success",
-    initial: "T",
-    bgColor: "#a963e6ff",
-  },
-  {
-    id: "18",
-    name: "Book Store",
-    date: "19 August",
-    amount: "450", // Changed from ₹ to
-    status: "failed",
-    initial: "B",
-    bgColor: "#6a82eeff",
-  },
-  {
-    id: "19",
-    name: "Gym Membership",
-    date: "18 August",
-    amount: "1,500", // Changed from ₹ to
-    status: "success",
-    initial: "G",
-    bgColor: "#e672b0ff",
-  },
-  {
-    id: "20",
-    name: "Online Shopping",
-    date: "18 August",
-    amount: "7,200", // Changed from ₹ to
-    status: "failed",
-    initial: "O",
-    bgColor: "#b571f1ff",
-  },
-  {
-    id: "21",
-    name: "Water Bill",
-    date: "17 August",
-    amount: "300", // Changed from ₹ to
-    status: "success",
-    initial: "W",
-    bgColor: "#647ff7ff",
-  },
-  {
-    id: "22",
-    name: "Movie Tickets",
-    date: "17 August",
-    amount: "600", // Changed from ₹ to
-    status: "success",
-    initial: "M",
-    bgColor: "#56a5ebff",
-  },
-  {
-    id: "23",
-    name: "Fuel Station",
-    date: "16 August",
-    amount: "2,500", // Changed from ₹ to
-    status: "success",
-    initial: "F",
-    bgColor: "#f79951ff",
-  },
-  {
-    id: "24",
-    name: "Pharmacy",
-    date: "16 August",
-    amount: "150", // Changed from ₹ to
-    status: "failed",
-    initial: "P",
-    bgColor: "#a164f1ff",
-  },
-  {
-    id: "25",
-    name: "Internet Bill",
-    date: "15 August",
-    amount: "799", // Changed from ₹ to
-    status: "failed",
-    initial: "I",
-    bgColor: "#57a2e4ff",
-  },
-  {
-    id: "26",
-    name: "Gift Purchase",
-    date: "15 August",
-    amount: "1,000", // Changed from ₹ to
-    status: "success",
-    initial: "G",
-    bgColor: "#a7e75eff",
-  },
-  {
-    id: "27",
-    name: "Car Wash",
-    date: "14 August",
-    amount: "350", // Changed from ₹ to
-    status: "success",
-    initial: "C",
-    bgColor: "#e66e84ff",
-  },
-  {
-    id: "28",
-    name: "Pet Supplies",
-    date: "14 August",
-    amount: "400", // Changed from ₹ to
-    status: "success",
-    initial: "P",
-    bgColor: "#da7b66ff",
-  },
-  {
-    id: "29",
-    name: "Travel Booking",
-    date: "13 August",
-    amount: "12,000", // Changed from ₹ to
-    status: "success",
-    initial: "T",
-    bgColor: "#a963e6ff",
-  },
-  {
-    id: "30",
-    name: "Furniture Store",
-    date: "13 August",
-    amount: "8,500", // Changed from ₹ to
-    status: "success",
-    initial: "F",
-    bgColor: "#6a82eeff",
-  },
-  {
-    id: "31",
-    name: "Home Repair",
-    date: "12 August",
-    amount: "3,000", // Changed from ₹ to
-    status: "failed",
-    initial: "H",
-    bgColor: "#e672b0ff",
-  },
-  {
-    id: "32",
-    name: "Clothing Store",
-    date: "12 August",
-    amount: "2,200", // Changed from ₹ to
-    status: "success",
-    initial: "C",
-    bgColor: "#b571f1ff",
-  },
-  {
-    id: "33",
-    name: "Donation",
-    date: "11 August",
-    amount: "500", // Changed from ₹ to
-    status: "success",
-    initial: "D",
-    bgColor: "#647ff7ff",
-  },
-  {
-    id: "34",
-    name: "Music Streaming",
-    date: "11 August",
-    amount: "149", // Changed from ₹ to
-    status: "success",
-    initial: "M",
-    bgColor: "#56a5ebff",
-  },
-  {
-    id: "35",
-    name: "Online Course",
-    date: "10 August",
-    amount: "999", // Changed from ₹ to
-    status: "success",
-    initial: "O",
-    bgColor: "#f79951ff",
-  },
-  {
-    id: "36",
-    name: "Hardware Store",
-    date: "10 August",
-    amount: "750", // Changed from ₹ to
-    status: "success",
-    initial: "H",
-    bgColor: "#a164f1ff",
-  },
-  {
-    id: "37",
-    name: "Supermarket",
-    date: "09 August",
-    amount: "1,800", // Changed from ₹ to
-    status: "success",
-    initial: "S",
-    bgColor: "#57a2e4ff",
-  },
-  {
-    id: "38",
-    name: "Laundry Service",
-    date: "09 August",
-    amount: "200", // Changed from ₹ to
-    status: "success",
-    initial: "L",
-    bgColor: "#a7e75eff",
-  },
-  {
-    id: "39",
-    name: "Bank Transfer",
-    date: "08 August",
-    amount: "5,000", // Changed from ₹ to
-    status: "success",
-    initial: "B",
-    bgColor: "#e66e84ff",
-  },
-  {
-    id: "40",
-    name: "Spa Treatment",
-    date: "08 August",
-    amount: "1,200", // Changed from ₹ to
-    status: "failed",
-    initial: "S",
-    bgColor: "#da7b66ff",
-  },
-];
+const convertApiToDisplayTransaction = (apiTransaction: ApiTransaction, type: 'sent' | 'received'): Transaction => {
+  const colors = [
+    "#56a5ebff", "#f79951ff", "#a164f1ff", "#57a2e4ff", 
+    "#a7e75eff", "#e66e84ff", "#da7b66ff", "#a963e6ff",
+    "#6a82eeff", "#e672b0ff", "#b571f1ff", "#647ff7ff"
+  ];
+  
+  const colorIndex = parseInt(apiTransaction._id.slice(-1), 16) % colors.length;
+  
+  const date = new Date(apiTransaction.createdAt).toLocaleDateString('en-US', {
+    day: 'numeric',
+    month: 'long'
+  });
+
+  const name = type === 'sent' 
+    ? `To: ${apiTransaction.recipientAddress.slice(0, 6)}...${apiTransaction.recipientAddress.slice(-4)}`
+    : `From: ${apiTransaction.recipientAddress.slice(0, 6)}...${apiTransaction.recipientAddress.slice(-4)}`;
+
+  return {
+    id: apiTransaction._id,
+    name: name,
+    date: date,
+    amount: apiTransaction.amount.toString(),
+    status: "success", //coz all stored tx are successfull
+    initial: type === 'sent' ? 'S' : 'R',
+    bgColor: colors[colorIndex],
+    txHash: apiTransaction.tx,
+    currency: apiTransaction.currency,
+  };
+};
 
 const TransactionHistoryScreen: React.FC = () => {
   const [searchText, setSearchText] = useState<string>("");
-  const [filteredTransactions, setFilteredTransactions] =
-    useState<Transaction[]>(dummyTransactions);
+  const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>([]);
+  const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
+  const [activeTab, setActiveTab] = useState<'sent' | 'received'>('sent');
+  const [loading, setLoading] = useState<boolean>(false);
+  const [page, setPage] = useState<number>(1);
+  const [hasMore, setHasMore] = useState<boolean>(true);
 
-  // Filter transactions whenever searchText changes
+  const loadTransactions = async (reset: boolean = false) => {
+    if (loading) return;
+    
+    setLoading(true);
+    try {
+      const currentPage = reset ? 1 : page;
+      const limit = 20;
+      
+      let apiTransactions: ApiTransaction[] = [];
+      
+      if (activeTab === 'sent') {
+        apiTransactions = await getSentTransactions(currentPage, limit);
+      } else {
+        apiTransactions = await getReceivedTransactions(currentPage, limit);
+      }
+
+      const displayTransactions = apiTransactions.map(transaction => 
+        convertApiToDisplayTransaction(transaction, activeTab)
+      );
+
+      if (reset) {
+        setAllTransactions(displayTransactions);
+        setPage(2);
+      } else {
+        setAllTransactions(prev => [...prev, ...displayTransactions]);
+        setPage(prev => prev + 1);
+      }
+
+      setHasMore(displayTransactions.length === limit);
+    } catch (error) {
+      // Alert.alert('Error', 'Failed to load transactions. Please try again.');
+      // console.error('Load transactions error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (searchText === "") {
-      setFilteredTransactions(dummyTransactions);
+      setFilteredTransactions(allTransactions);
     } else {
-      const filtered = dummyTransactions.filter((transaction) =>
-        transaction.name.toLowerCase().includes(searchText.toLowerCase())
+      const filtered = allTransactions.filter((transaction) =>
+        transaction.name.toLowerCase().includes(searchText.toLowerCase()) ||
+        transaction.txHash.toLowerCase().includes(searchText.toLowerCase()) ||
+        transaction.currency.toLowerCase().includes(searchText.toLowerCase())
       );
       setFilteredTransactions(filtered);
     }
-  }, [searchText]); // Depend on searchText
+  }, [searchText, allTransactions]);
+
+  useEffect(() => {
+    setPage(1);
+    setAllTransactions([]);
+    loadTransactions(true);
+  }, [activeTab]);
+
+ const totalAmount = filteredTransactions.reduce((sum, transaction) => {
+  const amount = parseFloat(transaction.amount);
+ return sum + amount;
+}, 0);
 
   return (
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
+      
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
@@ -354,8 +150,8 @@ const TransactionHistoryScreen: React.FC = () => {
             placeholder="Search transactions"
             placeholderTextColor="#999"
             style={styles.searchInput}
-            value={searchText} // Bind value to searchText state
-            onChangeText={setSearchText} // Update searchText on change
+            value={searchText}
+            onChangeText={setSearchText}
           />
           <TouchableOpacity>
             <MaterialCommunityIcons
@@ -366,15 +162,96 @@ const TransactionHistoryScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* Tab Buttons */}
+      <View style={styles.tabContainer}>
+        <TouchableOpacity
+          style={[
+            styles.tabButton,
+            activeTab === 'sent' && styles.activeTabButton
+          ]}
+          onPress={() => setActiveTab('sent')}
+        >
+          <MaterialCommunityIcons 
+            name="arrow-up" 
+            size={20} 
+            color={activeTab === 'sent' ? '#fff' : '#666'} 
+          />
+          <Text style={[
+            styles.tabButtonText,
+            activeTab === 'sent' && styles.activeTabButtonText
+          ]}>
+            Sent Transactions
+          </Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={[
+            styles.tabButton,
+            activeTab === 'received' && styles.activeTabButton
+          ]}
+          onPress={() => setActiveTab('received')}
+        >
+          <MaterialCommunityIcons 
+            name="arrow-down" 
+            size={20} 
+            color={activeTab === 'received' ? '#fff' : '#666'} 
+          />
+          <Text style={[
+            styles.tabButtonText,
+            activeTab === 'received' && styles.activeTabButtonText
+          ]}>
+            Received Transactions
+          </Text>
+        </TouchableOpacity>
+      </View>
+
       <ScrollView style={styles.scrollView}>
         {/* Monthly Summary */}
         <View style={styles.monthSummary}>
-          <Text style={styles.monthYear}>2025</Text>
-          <Text style={styles.monthTotal}>$1,27,360.17</Text>
+          <Text style={styles.monthYear}>
+            {activeTab === 'sent' ? 'Total Sent' : 'Total Received'}
+          </Text>
+          <Text style={styles.monthTotal}>
+            {totalAmount.toFixed(4)} USDC
+          </Text>
         </View>
+
+        {/* Loading indicator */}
+        {loading && allTransactions.length === 0 && (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#5abb5eff" />
+            <Text style={styles.loadingText}>Loading transactions...</Text>
+          </View>
+        )}
+
+        {/* No transactions message */}
+        {!loading && filteredTransactions.length === 0 && (
+          <View style={styles.emptyContainer}>
+            <MaterialCommunityIcons 
+              name="receipt" 
+              size={60} 
+              color="#ccc" 
+            />
+            <Text style={styles.emptyText}>
+              No {activeTab} transactions found
+            </Text>
+          </View>
+        )}
+
         {/* Transaction List */}
         {filteredTransactions.map((transaction) => (
-          <View key={transaction.id} style={styles.transactionItem}>
+          <TouchableOpacity 
+            key={transaction.id} 
+            style={styles.transactionItem}
+            onPress={() => {
+              // TODO: add navigation to transaction details here
+              Alert.alert(
+                'Transaction Details',
+                `Transaction Hash: ${transaction.txHash}\nAmount: ${transaction.amount} ${transaction.currency}\nDate: ${transaction.date}`
+              );
+            }}
+          >
             <View
               style={[
                 styles.initialCircle,
@@ -386,20 +263,38 @@ const TransactionHistoryScreen: React.FC = () => {
             <View style={styles.transactionDetails}>
               <Text style={styles.transactionName}>{transaction.name}</Text>
               <Text style={styles.transactionDate}>{transaction.date}</Text>
-              {transaction.status === "failed" && (
-                <View style={styles.failedStatus}>
-                  <MaterialCommunityIcons
-                    name="close-circle"
-                    size={14}
-                    color="#E53935"
-                  />
-                  <Text style={styles.failedText}> Failed</Text>
-                </View>
-              )}
+              <Text style={styles.transactionHash}>
+                {transaction.txHash.slice(0, 10)}...{transaction.txHash.slice(-6)}
+              </Text>
             </View>
-            <Text style={styles.transactionAmount}>${transaction.amount}</Text>
-          </View>
+            <View style={styles.amountContainer}>
+              <Text style={[
+                styles.transactionAmount,
+                { color: activeTab === 'sent' ? '#E53935' : '#4CAF50' }
+              ]}>
+                {activeTab === 'sent' ? '-' : '+'}{transaction.amount}
+              </Text>
+              <Text style={styles.currencyText}>{transaction.currency}</Text>
+            </View>
+          </TouchableOpacity>
         ))}
+
+        {/* Load More Button */}
+        {hasMore && !loading && filteredTransactions.length > 0 && (
+          <TouchableOpacity 
+            style={styles.loadMoreButton}
+            onPress={() => loadTransactions(false)}
+          >
+            <Text style={styles.loadMoreText}>Load More</Text>
+          </TouchableOpacity>
+        )}
+
+        {/* Loading more indicator */}
+        {loading && allTransactions.length > 0 && (
+          <View style={styles.loadingMoreContainer}>
+            <ActivityIndicator size="small" color="#5abb5eff" />
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -414,7 +309,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 10,
-    paddingTop: 50,
     paddingBottom: 15,
     backgroundColor: "#fff",
     borderBottomWidth: 1,
@@ -427,10 +321,10 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#f0f0f0", // Light gray background
+    backgroundColor: "#f0f0f0",
     borderRadius: 50,
     paddingHorizontal: 15,
-    paddingVertical: 5,
+    paddingVertical: 10,
     marginLeft: 10,
   },
   searchIcon: {
@@ -441,31 +335,36 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#000",
   },
-  micIcon: {
-    marginLeft: 10,
-    marginRight: 10,
-  },
-  filterContainer: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    paddingVertical: 10,
-    paddingHorizontal: 5,
-    backgroundColor: "#fff",
+  tabContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    borderBottomColor: '#eee',
   },
-  filterButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: "#f0f0f0", // Light gray background for filter buttons
+  tabButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginHorizontal: 5,
+    borderRadius: 25,
+    backgroundColor: '#f0f0f0',
   },
-  filterButtonText: {
+  activeTabButton: {
+    backgroundColor: '#5abb5eff',
+  },
+  tabButtonText: {
     fontSize: 14,
-    color: "#000",
-    marginRight: 5,
+    fontWeight: '500',
+    color: '#666',
+    marginLeft: 8,
+  },
+  activeTabButtonText: {
+    color: '#fff',
   },
   scrollView: {
     flex: 1,
@@ -488,6 +387,29 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     color: "#000",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 50,
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#666',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 50,
+  },
+  emptyText: {
+    marginTop: 15,
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
   },
   transactionItem: {
     flexDirection: "row",
@@ -521,20 +443,39 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#666",
   },
+  transactionHash: {
+    fontSize: 12,
+    color: "#999",
+    marginTop: 2,
+  },
+  amountContainer: {
+    alignItems: 'flex-end',
+  },
   transactionAmount: {
     fontSize: 16,
     fontWeight: "bold",
-    color: "#000",
   },
-  failedStatus: {
-    flexDirection: "row",
-    alignItems: "center",
+  currencyText: {
+    fontSize: 12,
+    color: "#666",
     marginTop: 2,
   },
-  failedText: {
-    fontSize: 13,
-    color: "#E53935", // Red color for failed status
-    marginLeft: 3,
+  loadMoreButton: {
+    backgroundColor: '#5abb5eff',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    alignItems: 'center',
+    marginVertical: 15,
+  },
+  loadMoreText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  loadingMoreContainer: {
+    paddingVertical: 15,
+    alignItems: 'center',
   },
 });
 
