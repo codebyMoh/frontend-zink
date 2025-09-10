@@ -2,8 +2,8 @@
 
 import { TokenManager } from "./tokenManager";
 
-const API_BASE_URL_USER = 'http://10.144.72.6:7777/api/v1/user';
-const API_BASE_URL_TRANSACTION = 'http://10.144.72.6:7777/api/v1/transaction';
+const API_BASE_URL_USER = 'http://192.168.1.5:7777/api/v1/user';
+const API_BASE_URL_TRANSACTION = "http://192.168.1.5:7777/api/v1/transaction";
 
 export const registerUser = async (userData: {
   email: string;

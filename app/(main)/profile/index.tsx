@@ -62,7 +62,7 @@ useEffect(() => {
             <TouchableOpacity
               style={styles.avatarContainer}
               activeOpacity={0.8}
-              onPress={() => router.push("/")} // testing
+              onPress={() => router.push("/share_qr")} // testing
             >
               <View style={styles.avatar}>
                 <Text style={styles.avatarText}>

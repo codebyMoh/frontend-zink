@@ -1,10 +1,11 @@
+import { TokenManager } from "@/services/tokenManager";
 import { AntDesign } from "@expo/vector-icons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import Octicons from "@expo/vector-icons/Octicons";
 import * as MediaLibrary from "expo-media-library";
 import { router } from "expo-router";
 import * as Sharing from "expo-sharing";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   SafeAreaView,
@@ -18,9 +19,9 @@ import Toast from "react-native-toast-message";
 import ViewShot from "react-native-view-shot";
 
 export default function ShareQRCodeScreen() {
-  const walletAddress = "0xE947D41FC4459818f8697AdAdf0e5C4606BB5f73";
-  const userName = "meetdesai10";
   const [isDownloading, setIsDownloading] = useState(false);
+  const [userId, setUserId] = useState(null);
+  const [userName, setUserName] = useState(null);
   const viewShotRef = useRef<string | any>(null);
 
   const handleDownloadQR = async () => {
@@ -52,6 +53,18 @@ export default function ShareQRCodeScreen() {
     }
   };
 
+  const getUserData = async () => {
+    const userData = await TokenManager.getUserData();
+    if (userData?._id) {
+      setUserId(userData?._id || null);
+      setUserName(userData?.userName || null);
+    }
+  };
+
+  useEffect(() => {
+    getUserData();
+  }, []);
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
@@ -77,20 +90,20 @@ export default function ShareQRCodeScreen() {
         <View style={styles.card}>
           <Text style={styles.userName}>{userName}</Text>
           <View style={styles.qrContainer}>
-            <QRCodeSvg
-              value={walletAddress}
-              size={220}
-              color="black"
-              backgroundColor="white"
-              logo={require("../../../assets/images/logos/Zink-Qr-Logo.png")}
-              logoSize={60}
-              logoMargin={3}
-              logoBackgroundColor="white"
-              logoBorderRadius={30}
-            />
+            {userId && (
+              <QRCodeSvg
+                value={userId}
+                size={220}
+                color="black"
+                backgroundColor="white"
+                logo={require("../../../assets/images/logos/Zink-Qr-Logo.png")}
+                logoSize={60}
+                logoMargin={3}
+                logoBackgroundColor="white"
+                logoBorderRadius={30}
+              />
+            )}
           </View>
-
-          <Text style={styles.walletText}>Id: 97AdAdf0e5C4606BB5f7</Text>
         </View>
       </ViewShot>
       {/* Bottom Buttons */}
