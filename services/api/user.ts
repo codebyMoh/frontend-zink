@@ -26,7 +26,6 @@ export const registerUser = async (userData: {
 
     return await response.json();
   } catch (error) {
-    console.error('Registration API error:', error);
     throw error;
   }
 };
@@ -50,7 +49,6 @@ export const scanUserById = async (userId: string) => {
 
     return await response.json();
   } catch (error) {
-    console.error('Scan user API error:', error);
     throw error;
   }
 };

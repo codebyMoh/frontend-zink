@@ -17,42 +17,39 @@ import {
 const { width } = Dimensions.get("window");
 
 export default function QrScan() {
-const [torchOn, setTorchOn] = useState(false);
-const [scanned, setScanned] = useState(false);
-const [permission, requestPermission] = useCameraPermissions();
+  const [torchOn, setTorchOn] = useState(false);
+  const [scanned, setScanned] = useState(false);
+  const [permission, requestPermission] = useCameraPermissions();
 
   const handleBarcodeScanned = async ({ data }: { data: string }) => {
-  if (scanned) return;
-  console.log("QR Data:", data);
-  setScanned(true);
-  
-  try {
-    const userId = data.trim();
-    
-    const response = await scanUserById(userId);
-    
-    if (response.success && response.data.user) {
+    console.log("QR Data:", data);
+    if (scanned) return;
+    setScanned(true);
+
+    try {
+      const userId = data.trim();
+
+      const response = await scanUserById(userId);
+
       const user = response.data.user;
-      
-      router.push({
+      router.replace({
         pathname: "/pay",
-        params: { 
+        params: {
           recipientAddress: user.smartWalletAddress,
           recipientId: user._id,
           recipientName: user.name,
-          recipientUsername: user.userName
-        }
+          recipientUsername: user.userName,
+        },
       });
-    } else {
-      Alert.alert("Error", "User not found");
+    } catch (error) {
+      router.replace("/");
+      Alert.alert(
+        "Error",
+        (error as Error)?.message || "Failed to find user. Please try again."
+      );
       setScanned(false);
     }
-  } catch (error) {
-    console.error("Error scanning user:", error);
-    Alert.alert("Error", "Failed to find user. Please try again.");
-    setScanned(false);
-  }
-};
+  };
 
   // upload image and scan the qr code
   const handlePickImage = async () => {
@@ -74,6 +71,9 @@ const [permission, requestPermission] = useCameraPermissions();
       }
     })();
   }, [requestPermission]);
+  useEffect(() => {
+    console.log("useeffect run.");
+  }, []);
   return (
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
@@ -92,7 +92,7 @@ const [permission, requestPermission] = useCameraPermissions();
           style={styles.topIcon}
           onPress={() => router.push("/")}
         >
-          <Ionicons name="close" size={26} color="#fff" />
+          <Ionicons name="close" size={30} color="#fff" />
         </TouchableOpacity>
 
         <View style={styles.topRight}>
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
 
   topBar: {
     position: "absolute",
-    top: 45,
+    top: 10,
     left: 20,
     right: 20,
     flexDirection: "row",

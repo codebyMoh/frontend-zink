@@ -18,7 +18,17 @@ export default function MainLayout() {
 
   return (
     <AnimationScreen>
-      <Stack screenOptions={{ headerShown: false }} />
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: {
+            paddingTop: 0,
+            paddingBottom: 0,
+            margin: 0,
+            marginTop: 0,
+          },
+        }}
+      />
     </AnimationScreen>
   );
 }

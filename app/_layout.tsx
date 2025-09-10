@@ -15,50 +15,54 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 export { ErrorBoundary } from "expo-router";
 
 export const unstable_settings = {
-	initialRouteName: "(main)",
+  initialRouteName: "(main)",
 };
 
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-	const [loaded, error] = useFonts({
-		SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
-		...FontAwesome.font,
-	});
+  const [loaded, error] = useFonts({
+    SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
+    ...FontAwesome.font,
+  });
 
-	useEffect(() => {
-		if (error) throw error;
-	}, [error]);
+  useEffect(() => {
+    if (error) throw error;
+  }, [error]);
 
-	useEffect(() => {
-		if (loaded) {
-			SplashScreen.hideAsync();
-		}
-	}, [loaded]);
+  useEffect(() => {
+    if (loaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [loaded]);
 
-	if (!loaded) {
-		return null;
-	}
+  if (!loaded) {
+    return null;
+  }
 
-	return <RootLayoutNav />;
+  return <RootLayoutNav />;
 }
 
 function RootLayoutNav() {
-	return (
-		<AlchemyAuthSessionProvider>
-			<SafeAreaProvider>
-				<Stack
-					screenOptions={{
-						headerShown: false,
-					}}
-				>
-					{/* Authentication Flow */}
-					<Stack.Screen name="(auth)" options={{headerShown:false}} />
-					
-					{/* Main App Flow */}
-					<Stack.Screen name="(main)" options={{headerShown:false}}/>
-				</Stack>
-			</SafeAreaProvider>
-		</AlchemyAuthSessionProvider>
-	);
+  return (
+    <AlchemyAuthSessionProvider>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: {
+            paddingTop: 0,
+            paddingBottom: 0,
+            margin: 0,
+            marginTop: 0,
+          },
+        }}
+      >
+        {/* Authentication Flow */}
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+
+        {/* Main App Flow */}
+        <Stack.Screen name="(main)" options={{ headerShown: false }} />
+      </Stack>
+    </AlchemyAuthSessionProvider>
+  );
 }

@@ -1,45 +1,45 @@
 {
-	"expo": {
-		"name": "account-kit-expo-quickstart",
-		"slug": "account-kit-expo-quickstart",
-		"version": "1.0.0",
-		"orientation": "portrait",
-		"icon": "./assets/images/icon.png",
-		"scheme": "account-kit-expo-quickstart",
-		"userInterfaceStyle": "automatic",
-		"newArchEnabled": true,
-		"splash": {
-			"image": "./assets/images/splash-icon.png",
-			"resizeMode": "contain",
-			"backgroundColor": "#ffffff"
-		},
-		"extra": {
-  "EXPO_PUBLIC_ALCHEMY_API_KEY": "6TcdB1J63GFGpAYwRMDMsl1RaG3dOEL0",
-  "EXPO_PUBLIC_API_BASE_URL_USER": "http://10.144.72.6:7777/api/v1/user",
-  "EXPO_PUBLIC_API_BASE_URL_TRANSACTION": "http://10.144.72.6:7777/api/v1/transaction"
-},
-		"ios": {
-			"supportsTablet": true,
-			"bundleIdentifier": "com.alchemy.accountkitexpoquickstart"
-		},
-		"android": {
-			"adaptiveIcon": {
-				"foregroundImage": "./assets/images/adaptive-icon.png",
-				"backgroundColor": "#ffffff"
-			},
-			"package": "com.alchemy.accountkitexpoquickstart"
-		},
-		"web": {
-			"bundler": "metro",
-			"output": "static",
-			"favicon": "./assets/images/favicon.png"
-		},
-		"plugins": [
-			"expo-router",
-			["expo-build-properties", { "ios": { "deploymentTarget": "17.0" } }]
-		],
-		"experiments": {
-			"typedRoutes": true
-		}
-	}
+  "expo": {
+    "name": "account-kit-expo-quickstart",
+    "slug": "account-kit-expo-quickstart",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "account-kit-expo-quickstart",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/images/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "extra": {
+      "EXPO_PUBLIC_ALCHEMY_API_KEY": "6TcdB1J63GFGpAYwRMDMsl1RaG3dOEL0",
+      "EXPO_PUBLIC_API_BASE_URL_USER": "http://192.168.1.5:7777/api/v1/user",
+      "EXPO_PUBLIC_API_BASE_URL_TRANSACTION": "http://192.168.1.5:7777/api/v1/transaction"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.alchemy.accountkitexpoquickstart"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.alchemy.accountkitexpoquickstart"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      ["expo-build-properties", { "ios": { "deploymentTarget": "17.0" } }]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
 }

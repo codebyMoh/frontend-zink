@@ -97,10 +97,9 @@ export default function ShareQRCodeScreen() {
                 color="black"
                 backgroundColor="white"
                 logo={require("../../../assets/images/logos/Zink-Qr-Logo.png")}
-                logoSize={60}
-                logoMargin={3}
+                logoSize={50}
                 logoBackgroundColor="white"
-                logoBorderRadius={30}
+                logoBorderRadius={25}
               />
             )}
           </View>
@@ -110,7 +109,7 @@ export default function ShareQRCodeScreen() {
       <View style={styles.bottomButtons}>
         <TouchableOpacity
           style={styles.scannerButton}
-          onPress={() => router.push("/scan_qr")}
+          onPress={() => router.replace("/scan_qr")}
         >
           <MaterialCommunityIcons name="qrcode-scan" size={24} color="black" />
           <Text style={styles.scannerButtonText}>Open scanner</Text>
@@ -133,8 +132,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   backButton: {
-    padding: 10,
-    marginTop: 20,
+    paddingHorizontal: 10,
     display: "flex",
     flexDirection: "row",
     alignItems: "center",

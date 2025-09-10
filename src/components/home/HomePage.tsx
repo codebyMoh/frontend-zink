@@ -126,7 +126,7 @@ const dummyPeople = [
 export default function WalletHomePage() {
   const [balances, setBalances] = useState<BalanceState>({
     usdc: "0",
-    isLoading: true
+    isLoading: true,
   });
 
   const user = useUser();
@@ -138,18 +138,18 @@ export default function WalletHomePage() {
 
   const [userName, setUserName] = useState("User"); // fallback name
 
-useEffect(() => {
-  const loadUserData = async () => {
-    const userData = await TokenManager.getUserData();
-    if (userData?.userName) {
-      setUserName(userData.userName);
-    }
-  };
-  loadUserData();
-}, []);
-  
+  useEffect(() => {
+    const loadUserData = async () => {
+      const userData = await TokenManager.getUserData();
+      if (userData?.userName) {
+        setUserName(userData.userName);
+      }
+    };
+    loadUserData();
+  }, []);
+
   // Base mainnet USDC contract address
-  const BASE_USDC = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
+  const BASE_USDC = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
 
   useEffect(() => {
     if (client && account?.address) {
@@ -161,37 +161,37 @@ useEffect(() => {
     if (!client || !account?.address || !user?.address) return;
 
     try {
-      setBalances(prev => ({ ...prev, isLoading: true }));
-
+      setBalances((prev) => ({ ...prev, isLoading: true }));
 
       // get USDC balance
       const smartAccountUsdcBalance = await client.readContract({
         address: BASE_USDC,
         abi: parseAbi([
-          'function balanceOf(address owner) view returns (uint256)'
+          "function balanceOf(address owner) view returns (uint256)",
         ]),
-        functionName: 'balanceOf',
-        args: [account.address]
+        functionName: "balanceOf",
+        args: [account.address],
       });
 
-      const smartUsdcFormatted = (Number(smartAccountUsdcBalance) / 1e6).toFixed(3);
+      const smartUsdcFormatted = (
+        Number(smartAccountUsdcBalance) / 1e6
+      ).toFixed(3);
       setBalances({
         usdc: parseFloat(smartUsdcFormatted).toFixed(3),
-        isLoading: false
+        isLoading: false,
       });
-
     } catch (error) {
-      console.error('Failed to load balances:', error);
-      setBalances(prev => ({ ...prev, isLoading: false }));
+      console.error("Failed to load balances:", error);
+      setBalances((prev) => ({ ...prev, isLoading: false }));
     }
   };
 
   // helper function to format the balance for display
   const formatBalanceForDisplay = (balance: string) => {
-    const [whole, decimal] = balance.split('.');
+    const [whole, decimal] = balance.split(".");
     return {
-      whole: whole || '0',
-      decimal: decimal || '00'
+      whole: whole || "0",
+      decimal: decimal || "00",
     };
   };
 
@@ -213,7 +213,9 @@ useEffect(() => {
           style={styles.profileIcon}
           onPress={() => router.push("/profile")}
         >
-          <Text style={styles.profileText}>{userName?.charAt(0)?.toUpperCase()}</Text>
+          <Text style={styles.profileText}>
+            {userName?.charAt(0)?.toUpperCase()}
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -223,22 +225,24 @@ useEffect(() => {
         imageStyle={styles.cardImageBackground}
       >
         <View style={styles.cardContentAbsolute}>
-          <Image 
-            source={require("../../../assets/images/token/usdc.png")} 
-            style={styles.usdcIcon} 
+          <Image
+            source={require("../../../assets/images/token/usdc.png")}
+            style={styles.usdcIcon}
           />
           {balances.isLoading ? (
             <ActivityIndicator color="white" size="large" />
           ) : (
             <Text style={styles.balanceAmount}>
               {displayBalance.whole}
-              <Text style={styles.balanceDecimal}>.{displayBalance.decimal}</Text>
+              <Text style={styles.balanceDecimal}>
+                .{displayBalance.decimal}
+              </Text>
             </Text>
           )}
         </View>
         <TouchableOpacity
           style={styles.cardMenuAbsolute}
-            onPress={() => router.push("/share_qr")}
+          onPress={() => router.push("/share_qr")}
         >
           <MaterialCommunityIcons name="qrcode-scan" size={24} color="white" />
         </TouchableOpacity>
@@ -433,7 +437,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     padding: 20,
-    paddingTop: 50,
   },
   searchBar: {
     flexDirection: "row",
