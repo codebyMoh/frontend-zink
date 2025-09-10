@@ -174,10 +174,9 @@ useEffect(() => {
         args: [account.address]
       });
 
-      const smartUsdcFormatted = (Number(smartAccountUsdcBalance) / 1e6).toFixed(2);
-
+      const smartUsdcFormatted = (Number(smartAccountUsdcBalance) / 1e6).toFixed(3);
       setBalances({
-        usdc: parseFloat(smartUsdcFormatted).toFixed(2),
+        usdc: parseFloat(smartUsdcFormatted).toFixed(3),
         isLoading: false
       });
 

@@ -15,8 +15,8 @@ import {
   View,
 } from "react-native";
 import { useAuthenticate, useSmartAccountClient, useUser } from "@account-kit/react-native";
-import { registerUser } from "@/services/api";
 import { TokenManager } from "@/services/tokenManager";
+import { registerUser } from "@/services/api/user";
 
 export default function OTPScreen() {
   const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
