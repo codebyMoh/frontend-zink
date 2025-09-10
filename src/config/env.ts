@@ -1,0 +1,10 @@
+import Constants from "expo-constants";
+
+const { EXPO_PUBLIC_ALCHEMY_API_KEY, EXPO_PUBLIC_API_BASE_URL_USER, EXPO_PUBLIC_API_BASE_URL_TRANSACTION } =
+  Constants.expoConfig?.extra || {};
+
+export const ENV = {
+  ALCHEMY_API_KEY: EXPO_PUBLIC_ALCHEMY_API_KEY as string,
+  API_BASE_URL_USER: EXPO_PUBLIC_API_BASE_URL_USER as string,
+  API_BASE_URL_TRANSACTION: EXPO_PUBLIC_API_BASE_URL_TRANSACTION as string,
+};

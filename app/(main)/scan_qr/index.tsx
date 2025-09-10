@@ -1,4 +1,4 @@
-import { scanUserById } from "@/services/api";
+import { scanUserById } from "@/services/api/user";
 import { Ionicons } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";

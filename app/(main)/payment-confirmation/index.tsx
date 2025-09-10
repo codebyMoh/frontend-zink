@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { useUser, useSmartAccountClient } from "@account-kit/react-native";
 import { encodeFunctionData, formatEther, parseAbi } from "viem";
-import { storeTransaction } from "@/services/api";
+import { storeTransaction } from "@/services/api/transaction";
 
 interface BalanceState {
   eth: string;
