@@ -38,7 +38,6 @@ export default function SignIn() {
                 emailMode: "otp",
             });
 
-            // console.log("OTP sent successfully, navigating to OTP modal");
             
             router.navigate({
                 pathname: "/otp-verification",

@@ -31,7 +31,6 @@ export default function PaymentConfirmationScreen() {
     usdc: "0"
   });
 
-  // console.log("balances:", balances);
   const user = useUser();
   const { client } = useSmartAccountClient({
     type: "ModularAccountV2",

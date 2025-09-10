@@ -80,7 +80,6 @@ useEffect(() => {
         await TokenManager.saveToken(response.data.token);
         await TokenManager.saveUserData(response.data.user);
 
-        console.log("Registration successful:", response);
         router.replace("/");
       } else {
         console.error("Missing required user data:", {
@@ -168,7 +167,6 @@ useEffect(() => {
         emailMode: "otp",
       });
 
-      // console.log("OTP resent successfully to", email);
       // Alert.alert("Success", "OTP has been resent to your email address.");
     } catch (error) {
       console.error("Failed to resend OTP:", error);

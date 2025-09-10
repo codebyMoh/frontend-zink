@@ -23,7 +23,7 @@ const [permission, requestPermission] = useCameraPermissions();
 
   const handleBarcodeScanned = async ({ data }: { data: string }) => {
   if (scanned) return;
-  console.log("QR Data:", data);
+  // console.log("QR Data:", data);
   setScanned(true);
   
   try {

@@ -234,20 +234,15 @@ if (receipt && typeof receipt === 'object' && 'transactionHash' in receipt) {
       return;
     }
 
-    console.log("=== DEBUG BALANCE CHECK ===");
     
     try {
       // Check current network
       const chainId = await client.getChainId();
-      console.log("Current Chain ID:", chainId);
-      console.log("Expected Base Sepolia Chain ID: 84532");
       
       // Check both addresses
       const smartAccountAddress = account.address;
       const userEOAAddress = user.address;
       
-      console.log("Smart Account Address:", smartAccountAddress);
-      console.log("User EOA Address:", userEOAAddress);
       
       // Base Sepolia USDC contract
 
@@ -276,15 +271,11 @@ if (receipt && typeof receipt === 'object' && 'transactionHash' in receipt) {
         const smartAccountUSDC = (Number(usdcBalanceSmartAccount) / 1e6).toFixed(6);
         const eoaUSDC = (Number(usdcBalanceEOA) / 1e6).toFixed(6);
 
-        console.log("USDC Balance - Smart Account:", smartAccountUSDC);
-        console.log("USDC Balance - EOA:", eoaUSDC);
 
         // Check ETH balances too
         const ethBalanceSmart = await client.getBalance({ address: smartAccountAddress });
         const ethBalanceEOA = await client.getBalance({ address: userEOAAddress });
 
-        console.log("ETH Balance - Smart Account:", formatEther(ethBalanceSmart));
-        console.log("ETH Balance - EOA:", formatEther(ethBalanceEOA));
 
         Alert.alert(
           "Debug Results",
