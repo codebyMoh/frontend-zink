@@ -11,6 +11,7 @@ export interface ContactItem {
   bgColor: string;
 }
 
+
 interface PeopleListWithToggleProps {
   title: string;
   people: ContactItem[];

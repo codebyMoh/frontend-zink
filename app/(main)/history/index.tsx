@@ -12,7 +12,8 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native";
-import { getSentTransactions, getReceivedTransactions, ApiTransaction } from "@/services/api/transaction";
+import { getSentTransactions, getReceivedTransactions, ApiTransaction, searchTransactionsByUsername } from "@/services/api/transaction";
+import { TokenManager } from "@/services/tokenManager";
 
 interface Transaction {
   id: string;
@@ -24,6 +25,7 @@ interface Transaction {
   bgColor: string;
   txHash: string;
   currency: string;
+  transactionType: 'sent' | 'received';
 }
 
 const convertApiToDisplayTransaction = (apiTransaction: ApiTransaction, type: 'sent' | 'received'): Transaction => {
@@ -40,9 +42,10 @@ const convertApiToDisplayTransaction = (apiTransaction: ApiTransaction, type: 's
     month: 'long'
   });
 
-  const name = type === 'sent' 
-    ? `To: ${apiTransaction.recipientAddress.slice(0, 6)}...${apiTransaction.recipientAddress.slice(-4)}`
-    : `From: ${apiTransaction.recipientAddress.slice(0, 6)}...${apiTransaction.recipientAddress.slice(-4)}`;
+ const name = type === 'sent' 
+  ? (apiTransaction.recipientUserName || apiTransaction.recipientAddress.slice(0, 6) + '...' + apiTransaction.recipientAddress.slice(-4))
+  : (apiTransaction.userName || apiTransaction.recipientAddress.slice(0, 6) + '...' + apiTransaction.recipientAddress.slice(-4));
+
 
   return {
     id: apiTransaction._id,
@@ -54,8 +57,10 @@ const convertApiToDisplayTransaction = (apiTransaction: ApiTransaction, type: 's
     bgColor: colors[colorIndex],
     txHash: apiTransaction.tx,
     currency: apiTransaction.currency,
+     transactionType: type,
   };
 };
+
 
 const TransactionHistoryScreen: React.FC = () => {
   const [searchText, setSearchText] = useState<string>("");
@@ -65,6 +70,45 @@ const TransactionHistoryScreen: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [page, setPage] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(true);
+
+  const performUsernameSearch = async (query: string) => {
+  setLoading(true);
+  try {
+  
+    const currentUserId = (await TokenManager.getUserData())._id || "";
+    const searchResults = await searchTransactionsByUsername(query);
+    const displayTransactions = searchResults.map(transaction => {
+      const type = transaction.userId === currentUserId ? 'sent' : 'received';
+      return convertApiToDisplayTransaction(transaction, type);
+    });
+    setFilteredTransactions(displayTransactions);
+  } catch (error) {
+    console.error('Username search error:', error);
+    const filtered = allTransactions.filter((transaction) =>
+      transaction.name.toLowerCase().includes(searchText.toLowerCase()) ||
+      transaction.txHash.toLowerCase().includes(searchText.toLowerCase()) ||
+      transaction.currency.toLowerCase().includes(searchText.toLowerCase())
+    );
+    setFilteredTransactions(filtered);
+  } finally {
+    setLoading(false);
+  }
+};
+
+  useEffect(() => {
+  if (searchText === "") {
+    setFilteredTransactions(allTransactions);
+  } else if (searchText.trim().length >= 2) {
+    performUsernameSearch(searchText.trim());
+  } else {
+    const filtered = allTransactions.filter((transaction) =>
+      transaction.name.toLowerCase().includes(searchText.toLowerCase()) ||
+      transaction.txHash.toLowerCase().includes(searchText.toLowerCase()) ||
+      transaction.currency.toLowerCase().includes(searchText.toLowerCase())
+    );
+    setFilteredTransactions(filtered);
+  }
+}, [searchText, allTransactions]);
 
   const loadTransactions = async (reset: boolean = false) => {
     if (loading) return;
@@ -166,57 +210,73 @@ const TransactionHistoryScreen: React.FC = () => {
       {/* Tab Buttons */}
       <View style={styles.tabContainer}>
         <TouchableOpacity
-          style={[
-            styles.tabButton,
-            activeTab === 'sent' && styles.activeTabButton
-          ]}
-          onPress={() => setActiveTab('sent')}
-        >
-          <MaterialCommunityIcons 
-            name="arrow-up" 
-            size={20} 
-            color={activeTab === 'sent' ? '#fff' : '#666'} 
-          />
-          <Text style={[
-            styles.tabButtonText,
-            activeTab === 'sent' && styles.activeTabButtonText
-          ]}>
-            Sent Transactions
-          </Text>
-        </TouchableOpacity>
+    style={[
+      styles.tabButton,
+      activeTab === 'sent' && styles.activeTabButton,
+      searchText.trim().length >= 2 && styles.searchModeTab 
+    ]}
+    onPress={() => setActiveTab('sent')}
+    // disabled={searchText.trim().length >= 2}
+  >
+    <MaterialCommunityIcons 
+      name="arrow-up" 
+      size={20} 
+      color={searchText.trim().length >= 2 ? '#ccc' : (activeTab === 'sent' ? '#fff' : '#666')} 
+    />
+    <Text style={[
+      styles.tabButtonText,
+      activeTab === 'sent' && styles.activeTabButtonText,
+      searchText.trim().length >= 2 && styles.searchModeTabText
+    ]}>
+      Sent
+    </Text>
+  </TouchableOpacity>
         
-        <TouchableOpacity
-          style={[
-            styles.tabButton,
-            activeTab === 'received' && styles.activeTabButton
-          ]}
-          onPress={() => setActiveTab('received')}
-        >
-          <MaterialCommunityIcons 
-            name="arrow-down" 
-            size={20} 
-            color={activeTab === 'received' ? '#fff' : '#666'} 
-          />
-          <Text style={[
-            styles.tabButtonText,
-            activeTab === 'received' && styles.activeTabButtonText
-          ]}>
-            Received Transactions
-          </Text>
-        </TouchableOpacity>
+       <TouchableOpacity
+    style={[
+      styles.tabButton,
+      activeTab === 'received' && styles.activeTabButton,
+      searchText.trim().length >= 2 && styles.searchModeTab
+    ]}
+    onPress={() => setActiveTab('received')}
+    // disabled={searchText.trim().length >= 2}
+  >
+    <MaterialCommunityIcons 
+      name="arrow-down" 
+      size={20} 
+      color={searchText.trim().length >= 2 ? '#ccc' : (activeTab === 'received' ? '#fff' : '#666')} 
+    />
+    <Text style={[
+      styles.tabButtonText,
+      activeTab === 'received' && styles.activeTabButtonText,
+      searchText.trim().length >= 2 && styles.searchModeTabText
+    ]}>
+      Received
+    </Text>
+  </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.scrollView}>
         {/* Monthly Summary */}
-        <View style={styles.monthSummary}>
-          <Text style={styles.monthYear}>
-            {activeTab === 'sent' ? 'Total Sent' : 'Total Received'}
-          </Text>
-          <Text style={styles.monthTotal}>
-            {totalAmount.toFixed(4)} USDC
-          </Text>
-        </View>
+<View style={styles.monthSummary}>
+  <Text style={styles.monthYear}>
+    {searchText.trim().length >= 2 
+      ? `Search Results (${filteredTransactions.length})`
+      : (activeTab === 'sent' ? 'Total Sent' : 'Total Received')
+    }
+  </Text>
+  <Text style={styles.monthTotal}>
+    {totalAmount.toFixed(4)} USDC
+  </Text>
+</View>
 
+{searchText.trim().length >= 2 && (
+  <View style={styles.searchModeIndicator}>
+    <Text style={styles.searchModeText}>
+      Searching all transactions for "{searchText}"
+    </Text>
+  </View>
+)}
         {/* Loading indicator */}
         {loading && allTransactions.length === 0 && (
           <View style={styles.loadingContainer}>
@@ -244,13 +304,31 @@ const TransactionHistoryScreen: React.FC = () => {
           <TouchableOpacity 
             key={transaction.id} 
             style={styles.transactionItem}
-            onPress={() => {
-              // TODO: add navigation to transaction details here
-              Alert.alert(
-                'Transaction Details',
-                `Transaction Hash: ${transaction.txHash}\nAmount: ${transaction.amount} ${transaction.currency}\nDate: ${transaction.date}`
-              );
-            }}
+            // onPress={() => {
+            //   // TODO: add navigation to transaction details here
+            //   Alert.alert(
+            //     'Transaction Details',
+            //     `Transaction Hash: ${transaction.txHash}\nAmount: ${transaction.amount} ${transaction.currency}\nDate: ${transaction.date}`,
+            //   );
+            // }}
+
+          onPress={() => {
+  router.push({
+    pathname: "/transaction_details",
+    params: {
+      amount: transaction.amount,
+      currency: transaction.currency,
+      recipient: transaction.name,
+      transactionHash: transaction.txHash,
+      date: transaction.date,
+      status: transaction.status,
+      transactionType: transaction.transactionType,
+      bgColor: transaction.bgColor,
+      initial: transaction.initial
+    }
+  });
+}}
+
           >
             <View
               style={[
@@ -269,11 +347,11 @@ const TransactionHistoryScreen: React.FC = () => {
             </View>
             <View style={styles.amountContainer}>
               <Text style={[
-                styles.transactionAmount,
-                { color: activeTab === 'sent' ? '#E53935' : '#4CAF50' }
-              ]}>
-                {activeTab === 'sent' ? '-' : '+'}{transaction.amount}
-              </Text>
+ styles.transactionAmount,
+ { color: transaction.transactionType === 'sent' ? '#E53935' : '#4CAF50' }
+]}>
+ {transaction.transactionType === 'sent' ? '-' : '+'}{transaction.amount}
+</Text>
               <Text style={styles.currencyText}>{transaction.currency}</Text>
             </View>
           </TouchableOpacity>
@@ -477,6 +555,26 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     alignItems: 'center',
   },
+searchModeTab: {
+  backgroundColor: '#f5f5f5',
+  opacity: 0.6,
+},
+searchModeTabText: {
+  color: '#ccc',
+},
+searchModeIndicator: {
+  backgroundColor: '#e3f2fd',
+  paddingVertical: 8,
+  paddingHorizontal: 20,
+  borderBottomWidth: 1,
+  borderBottomColor: '#eee',
+},
+searchModeText: {
+  fontSize: 14,
+  color: '#1976d2',
+  textAlign: 'center',
+  fontStyle: 'italic',
+},
 });
 
 export default TransactionHistoryScreen;

@@ -1,6 +1,6 @@
 import { AntDesign, MaterialCommunityIcons } from "@expo/vector-icons";
 import { Stack, router } from "expo-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Platform,
   SafeAreaView,
@@ -10,14 +10,19 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  ActivityIndicator,
 } from "react-native";
+import { searchUserByUserName } from "@/services/api/user"; // Import the API function
+import { ApiTransaction, getReceivedTransactions, getSentTransactions } from "@/services/api/transaction";
+import { TokenManager } from "@/services/tokenManager";
 
-// Interface for suggested category items
-interface CategoryItem {
-  id: string;
-  name: string;
-  icon: string;
-  onPress: () => void;
+interface ApiUser {
+  _id: string;
+  email: string;
+  userName?: string | undefined;
+  walletAddressEVM: string;
+  smartWalletAddress: string;
+  active: boolean;
 }
 
 // Interface for contact items
@@ -27,55 +32,178 @@ interface ContactItem {
   number: string;
   initial: string;
   bgColor: string;
+  isApiResult?: boolean;
+  userData?: ApiUser;
 }
 
 export default function SearchPaymentsScreen() {
   const [searchText, setSearchText] = useState<string>("");
+  const [searchResults, setSearchResults] = useState<ContactItem[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [searchError, setSearchError] = useState<string>("");
+  const [recentTransactions, setRecentTransactions] = useState<ContactItem[]>([]);
 
-  const allPeople: ContactItem[] = [
-    {
-      id: "p1",
-      name: "Self transfer",
-      number: "Transfer money between your accounts",
-      initial: "S",
-      bgColor: "#34C759",
-    }, // Green for self
-    {
-      id: "p2",
-      name: "Split expenses",
-      number: "Share expenses with a group",
-      initial: "S",
-      bgColor: "#FF8C00",
-    }, // Orange for split
-    {
-      id: "p3",
-      name: "7D_15_GAJERA SHREYANS RAMES...",
-      number: "+91 98793 53622",
-      initial: "G",
-      bgColor: "#6A5ACD",
-    },
-    {
-      id: "p4",
-      name: "Alagiya Bakul",
-      number: "+91 95375 03445",
-      initial: "A",
-      bgColor: "#B0415E",
-    },
-    {
-      id: "p5",
-      name: "Alagiya Suresh",
-      number: "+91 90998 52904",
-      initial: "A",
-      bgColor: "#4682B4",
-    },
-    {
-      id: "p6",
-      name: "John Doe",
-      number: "+1 123 456 7890",
-      initial: "J",
-      bgColor: "#20B2AA",
-    },
-  ];
+useEffect(() => {
+  const loadRecentTransactions = async () => {
+    try {
+      const currentUserId = (await TokenManager.getUserData())._id || "";
+      
+      const [sentTxs, receivedTxs] = await Promise.all([
+        getSentTransactions(1, 10),
+        getReceivedTransactions(1, 10)
+      ]);
+      
+      const allTxs = [...sentTxs, ...receivedTxs]
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      
+      const recentContacts = convertTransactionsToUniqueContacts(allTxs, currentUserId);
+      setRecentTransactions(recentContacts.slice(0, 5));
+    } catch (error) {
+      console.error("Failed to load recent transactions:", error);
+    }
+  };
+
+  loadRecentTransactions();
+}, []);
+
+
+const convertTransactionsToUniqueContacts = (transactions: ApiTransaction[], currentUserId: string): ContactItem[] => {
+  const userMap = new Map<string, ContactItem>();
+  const colors = ["#34C759", "#FF8C00", "#6A5ACD", "#B0415E", "#4682B4", "#20B2AA"];
+  
+  transactions.forEach(transaction => {
+    const isReceived = transaction.recipientId === currentUserId;
+    const otherUserId = isReceived ? transaction.userId : transaction.recipientId;
+    const otherUserName = isReceived ? transaction.userName : transaction.recipientUserName;
+    
+    if (otherUserId === currentUserId) return;
+    
+    if (!otherUserName || otherUserName.trim() === '') return;
+    
+    if (!userMap.has(otherUserId)) {
+      const colorIndex = parseInt(otherUserId.slice(-1), 16) % colors.length;
+      
+      userMap.set(otherUserId, {
+        id: otherUserId,
+        name: otherUserName,
+        number: `Recent transaction • ${transaction.currency}`,
+        initial: otherUserName.charAt(0).toUpperCase(),
+        bgColor: colors[colorIndex],
+        isApiResult: false,
+        userData: isReceived ? {
+          _id: transaction.userId,
+          userName: transaction.userName,
+          email: '', // not available in transaction data
+          walletAddressEVM: transaction.recipientAddress,
+          smartWalletAddress: transaction.recipientAddress,
+          active: true
+        } : {
+          _id: transaction.recipientId,
+          userName: transaction.recipientUserName,
+          email: '', // not available in transaction data
+          walletAddressEVM: transaction.recipientAddress,
+          smartWalletAddress: transaction.recipientAddress,
+          active: true
+        }
+      });
+    }
+  });
+  
+  return Array.from(userMap.values());
+};
+
+  const generateRandomColor = () => {
+    const colors = ["#34C759", "#FF8C00", "#6A5ACD", "#B0415E", "#4682B4", "#20B2AA", "#FF6B6B", "#4ECDC4"];
+    return colors[Math.floor(Math.random() * colors.length)];
+  };
+
+  const convertApiUsersToContacts = (apiUsers: ApiUser[]): ContactItem[] => {
+    return apiUsers.map((user) => ({
+      id: user._id,
+      name: user.userName ?? '',
+      number: user.email,
+      initial: (user.userName ?? '').charAt(0).toUpperCase(),
+      bgColor: generateRandomColor(),
+      isApiResult: true,
+      userData: user,
+    }));
+  };
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (searchText.trim().length >= 3) {
+        performSearch(searchText.trim());
+      } else {
+        setSearchResults([]);
+        setSearchError("");
+      }
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchText]);
+
+  const performSearch = async (query: string) => {
+    setIsLoading(true);
+    setSearchError("");
+    
+    try {
+      const response = await searchUserByUserName(query);
+      if (response.success && response.data?.users) {
+        const contactItems = convertApiUsersToContacts(response.data.users);
+        setSearchResults(contactItems);
+      } else {
+        setSearchResults([]);
+        setSearchError("No users found");
+      }
+    } catch (error: any) {
+      console.error("Search error:", error);
+      setSearchResults([]);
+      setSearchError(error.message || "Failed to search users");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+const filteredRecentTransactions = searchText.trim().length > 0 
+  ? recentTransactions.filter(transaction => 
+      transaction.name.toLowerCase().includes(searchText.toLowerCase()) ||
+      transaction.number.toLowerCase().includes(searchText.toLowerCase())
+    )
+  : recentTransactions;
+
+// When searching (searchText >= 3 chars), exclude recent transactions that match search results
+const uniqueRecentTransactions = searchText.trim().length >= 3 
+  ? filteredRecentTransactions.filter(recent => 
+      !searchResults.some(searchResult => 
+        searchResult.userData?._id === recent.userData?._id ||
+        searchResult.userData?.userName === recent.userData?.userName
+      )
+    )
+  : filteredRecentTransactions;
+
+const displayedPeople = searchText.trim().length >= 3 
+  ? searchResults  
+  : filteredRecentTransactions; 
+
+
+
+const handlePersonPress = (person: ContactItem) => {
+  console.log("Selected person:", person);
+   if (person.userData) {
+     router.replace({
+        pathname: "/pay",
+        params: {
+          recipientAddress: person.userData.smartWalletAddress,
+          recipientId: person.userData._id,
+          recipientName: person.name,
+          recipientUsername: person.name,
+        }
+     });
+   } else {
+     // ??? Handle cases with no userData
+     router.replace("/pay");
+   }
+};
 
   return (
     <SafeAreaView style={styles.container}>
@@ -91,7 +219,7 @@ export default function SearchPaymentsScreen() {
         </TouchableOpacity>
         <TextInput
           style={styles.appBarSearchInput}
-          placeholder="Pay anyone on UPI"
+          placeholder="Pay anyone on ZINK"
           placeholderTextColor="#888"
           value={searchText}
           onChangeText={setSearchText}
@@ -110,14 +238,34 @@ export default function SearchPaymentsScreen() {
       </View>
 
       <ScrollView style={styles.scrollView}>
-        {/* All People on UPI */}
-        <Text style={styles.sectionHeader}>All people on ZINK</Text>
+        {/* Loading Indicator */}
+        {isLoading && (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#007AFF" />
+            <Text style={styles.loadingText}>Searching users...</Text>
+          </View>
+        )}
+
+        {searchError && !isLoading && (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{searchError}</Text>
+          </View>
+        )}
+
+        {searchText.trim().length >= 3 && searchResults.length > 0 && (
+  <Text style={styles.sectionHeader}>Search Results</Text>
+)}
+
+{searchText.trim().length < 3 && (
+  <Text style={styles.sectionHeader}>Recents</Text>
+)}
+        
         <View style={styles.peopleList}>
-          {allPeople.map((person) => (
+          {displayedPeople.map((person) => (
             <TouchableOpacity
               key={person.id}
               style={styles.personListItem}
-              onPress={() => router.push("/pay")}
+              onPress={() => handlePersonPress(person)}
             >
               <View
                 style={[
@@ -130,12 +278,23 @@ export default function SearchPaymentsScreen() {
                 </Text>
               </View>
               <View style={styles.personListDetails}>
-                <Text style={styles.personListName}>{person.name}</Text>
+                <Text style={styles.personListName}>
+                  {person.name}
+                  {person.isApiResult && (
+                    <Text style={styles.apiResultBadge}> • ZINK User</Text>
+                  )}
+                </Text>
                 <Text style={styles.personListNumber}>{person.number}</Text>
               </View>
             </TouchableOpacity>
           ))}
         </View>
+
+        {!isLoading && displayedPeople.length === 0 && searchText.trim().length >= 3 && (
+          <View style={styles.noResultsContainer}>
+            <Text style={styles.noResultsText}>No users found for "{searchText}"</Text>
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -183,40 +342,6 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginBottom: 10,
   },
-  // Categories Grid
-  categoriesGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "flex-start",
-    paddingHorizontal: 15,
-    marginBottom: 20,
-  },
-  categoryItem: {
-    width: "25%",
-    alignItems: "center",
-    marginBottom: 15,
-    paddingVertical: 10,
-  },
-  categoryIconBackground: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: "#f0f0f0",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  categoryText: {
-    fontSize: 12,
-    color: "#000",
-    textAlign: "center",
-  },
-  // People List
   peopleList: {
     marginTop: 10,
     paddingHorizontal: 20,
@@ -253,5 +378,39 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#555",
     marginTop: 2,
+  },
+  apiResultBadge: {
+    fontSize: 12,
+    color: "#007AFF",
+    fontWeight: "normal",
+  },
+  loadingContainer: {
+    alignItems: "center",
+    paddingVertical: 20,
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: "#555",
+  },
+  errorContainer: {
+    alignItems: "center",
+    paddingVertical: 20,
+    marginHorizontal: 20,
+  },
+  errorText: {
+    fontSize: 16,
+    color: "#FF3B30",
+    textAlign: "center",
+  },
+  noResultsContainer: {
+    alignItems: "center",
+    paddingVertical: 40,
+    marginHorizontal: 20,
+  },
+  noResultsText: {
+    fontSize: 16,
+    color: "#888",
+    textAlign: "center",
   },
 });

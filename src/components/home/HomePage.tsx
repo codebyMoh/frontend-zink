@@ -299,7 +299,7 @@ export default function WalletHomePage() {
       {/* people */}
       <ProfileIconSection
         title="People"
-        people={dummyPeople}
+        people={dummyPeople} 
         initialVisibleCount={7}
       />
 

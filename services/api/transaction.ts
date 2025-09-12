@@ -11,6 +11,8 @@ export interface ApiTransaction {
   currency: string;
   createdAt: string;
   updatedAt: string;
+  recipientUserName?: string;
+  userName?: string;
 }
 
 export interface TransactionResponse {
@@ -112,6 +114,35 @@ export const getReceivedTransactions = async (
     return data.data.transactions || [];
   } catch (error) {
     console.error("Get received transactions API error:", error);
+    throw error;
+  }
+};
+
+export const searchTransactionsByUsername = async (search: string): Promise<ApiTransaction[]> => {
+  try {
+    const token = await TokenManager.getToken();
+
+    const response = await fetch(
+      `${ENV.API_BASE_URL_TRANSACTION}/searchTransactionByUsername/${encodeURIComponent(search)}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to search transactions");
+    }
+
+    const data = await response.json();
+    console.log("Search transactions response data:", data);
+    return data.data.transactions || [];
+  } catch (error) {
+    console.error("Search transactions API error:", error);
     throw error;
   }
 };

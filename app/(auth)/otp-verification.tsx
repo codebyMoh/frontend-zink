@@ -14,7 +14,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useAuthenticate, useSmartAccountClient, useUser } from "@account-kit/react-native";
+import { useAuthenticate, useLogout, useSignerStatus, useSmartAccountClient, useUser } from "@account-kit/react-native";
 import { TokenManager } from "@/services/tokenManager";
 import { registerUser } from "@/services/api/user";
 
@@ -28,13 +28,14 @@ export default function OTPScreen() {
 
   const { email } = useLocalSearchParams<{ email: string }>();
   const { authenticate, authenticateAsync } = useAuthenticate();
-
+const { isConnected } = useSignerStatus();
   const userData = useUser();
 
   const { client } = useSmartAccountClient({
     type: "ModularAccountV2",
   });
 
+  const { logout } = useLogout();
 
   const inputRefs = useRef<Array<TextInput | null>>([]);
 
@@ -67,7 +68,6 @@ useEffect(() => {
       const smartWalletAddress = client.account.address;
 
       if (userData.email && userData.solanaAddress && smartWalletAddress) {
-
         const response = await registerUser({
           email: userData.email,
           addressEvm: userData.address,
@@ -88,10 +88,17 @@ useEffect(() => {
           smartWalletAddress,
         });
         setErrorMessage("Failed to get user information. Please try again.");
+        // Logout from Account Kit when backend registration fails
+        await logout();
+        await TokenManager.clearAll();
       }
     } catch (registrationError) {
       console.error("Backend registration failed:", registrationError);
       setErrorMessage("Registration failed. Please try again.");
+      // Logout from Account Kit when backend registration fails
+      await logout();
+      // Clear any stored tokens
+      await TokenManager.clearAll();
     } finally {
       setIsLoading(false);
       setShouldRegister(false);
@@ -99,7 +106,7 @@ useEffect(() => {
   };
 
   handleRegistration();
-}, [shouldRegister, client?.account?.address, userData]); // Added userData to dependencies
+}, [shouldRegister, client?.account?.address, userData, logout]);
 
 
   const handleOtpChange = (text: string, index: number) => {
@@ -125,30 +132,33 @@ useEffect(() => {
   };
 
   const handleVerifyOtp = async () => {
-    setErrorMessage("");
-    setIsLoading(true);
-    const fullOtp = otp.join("");
+  setErrorMessage("");
+  setIsLoading(true);
+  const fullOtp = otp.join("");
 
-    if (fullOtp.length !== 6 || !/^\d+$/.test(fullOtp)) {
-      setErrorMessage("Please enter a valid 6-digit OTP.");
-      setIsLoading(false);
-      return;
-    }
+  if (fullOtp.length !== 6 || !/^\d+$/.test(fullOtp)) {
+    setErrorMessage("Please enter a valid 6-digit OTP.");
+    setIsLoading(false);
+    return;
+  }
 
-    try {
-      await authenticate({
-        otpCode: fullOtp,
-        type: "otp",
-      });
-      
-      //trigger the registration process
-      setShouldRegister(true);
-    } catch (error) {
-      console.error("OTP verification failed:", error);
-      setErrorMessage("Invalid OTP. Please try again.");
-      setIsLoading(false);
-    }
-  };
+   try {
+    await authenticate({
+      otpCode: fullOtp,
+      type: "otp",
+    });
+    
+    
+    clearOtpInputs();
+    setShouldRegister(true);
+    
+  } catch (error) {
+    console.error("OTP verification failed:", error);
+    setErrorMessage("Invalid OTP. Please try again.");
+    setIsLoading(false);
+    clearOtpInputs();
+  }
+};
 
   const handleResendOtp = async () => {
     if (!email) {
@@ -175,6 +185,11 @@ useEffect(() => {
       setResendTimer(0);
     }
   };
+
+  const clearOtpInputs = () => {
+  setOtp(["", "", "", "", "", ""]);
+  inputRefs.current[0]?.focus();
+};
 
   return (
     <SafeAreaView style={styles.container}>

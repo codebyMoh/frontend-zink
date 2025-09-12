@@ -2,8 +2,6 @@ import { AntDesign, Ionicons } from "@expo/vector-icons";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useEffect, useRef } from "react";
 import {
-  Animated,
-  Easing,
   SafeAreaView,
   StyleSheet,
   Text,
@@ -14,41 +12,13 @@ import {
 } from "react-native";
 
 export default function TransactionSuccessScreen() {
-  const scaleAnim = useRef(new Animated.Value(0)).current;
-  const opacityAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(50)).current;
 
-  // Get parameters passed from confirmation screen
   const params = useLocalSearchParams();
   const amount = params.amount || "0.00";
-  const recipient = params.recipient || "Lance Whitney";
+  const recipient = params.recipient as string || "Lance Whitney";
   const transactionHash = params.transactionHash as string;
-  const userOpHash = params.userOpHash as string;
-
-  useEffect(() => {
-    // Enhanced animation sequence
-    Animated.sequence([
-      Animated.timing(scaleAnim, {
-        toValue: 1,
-        duration: 600,
-        easing: Easing.elastic(1),
-        useNativeDriver: true,
-      }),
-      Animated.parallel([
-        Animated.timing(opacityAnim, {
-          toValue: 1,
-          duration: 400,
-          useNativeDriver: true,
-        }),
-        Animated.timing(slideAnim, {
-          toValue: 0,
-          duration: 400,
-          easing: Easing.out(Easing.cubic),
-          useNativeDriver: true,
-        }),
-      ]),
-    ]).start();
-  }, [scaleAnim, opacityAnim, slideAnim]);
+  const transactionType = params.transactionType as 'sent' | 'received';
+  const date = params.date || new Date().toLocaleDateString();
 
   const handleGoHome = () => {
     router.replace("/");
@@ -64,10 +34,10 @@ export default function TransactionSuccessScreen() {
   const handleShare = async () => {
     try {
       const message = `I just sent ${amount} USDC to ${recipient} using crypto! 💰\n\nTransaction: https://basescan.org/tx/${transactionHash}`;
-      
+
       await Share.share({
         message,
-        title: "Payment Sent Successfully!",
+        title: "Transaction Details",
       });
     } catch (error) {
       console.log("Share failed:", error);
@@ -83,56 +53,64 @@ export default function TransactionSuccessScreen() {
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
 
-      <View style={styles.content}>
-        {/* Animated Success Icon */}
-        <Animated.View
-          style={[
-            styles.iconContainer,
-            { transform: [{ scale: scaleAnim }] }
-          ]}
-        >
-          <View style={styles.successCircle}>
-            <AntDesign name="check" size={50} color="#fff" />
-          </View>
-        </Animated.View>
+<View style={styles.header}>
+  <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+    <AntDesign name="arrowleft" size={28} color="black" />
+  </TouchableOpacity>
+  <Text style={styles.headerTitle}>ZINK</Text>
+  <View style={styles.placeholder} />
+</View>
 
-        {/* Animated Content */}
-        <Animated.View
-          style={[
-            styles.textContainer,
-            {
-              opacity: opacityAnim,
-              transform: [{ translateY: slideAnim }],
-            },
-          ]}
-        >
-          <Text style={styles.title}>Payment Sent Successfully!</Text>
-          <Text style={styles.subtitle}>
-            You have successfully sent{" "}
-            <Text style={styles.amountText}>${amount} USDC</Text> to{" "}
-            <Text style={styles.recipientText}>{recipient}</Text>.
-          </Text>
-        </Animated.View>
+      <View style={styles.content}>
+        <View style={styles.iconContainer}>
+  <View style={styles.successCircle}>
+    <Text style={styles.recipientInitial}>
+      {recipient.charAt(0).toUpperCase()}
+    </Text>
+  </View>
+</View>
+
+        <View style={styles.textContainer}>
+  <Text style={styles.title}>
+    {transactionType === 'sent' ? 'To' : 'From'} {recipient}
+  </Text>
+  <Text style={styles.email}>{recipient.toLowerCase().replace(' ', '')}@zink.app</Text>
+  <Text style={styles.amountText}>{amount} USDC</Text>
+  {params.message && <Text style={styles.messageText}>{params.message}</Text>}
+  
+  <View style={styles.statusRow}>
+    <AntDesign name="checkcircle" size={16} color="#34C759" />
+    <Text style={styles.completedText}>Completed</Text>
+  </View>
+  
+  <View style={styles.divider} />
+  <Text style={styles.dateText}>{date}</Text>
+</View>
 
         {/* Transaction Details Card */}
        <View style={styles.detailsCard}>
   <Text style={styles.detailsTitle}>Transaction Details</Text>
-  
+
   <View style={styles.detailRow}>
     <Text style={styles.detailLabel}>Amount:</Text>
     <Text style={styles.detailValue}>${amount} USDC</Text>
   </View>
-  
+
   <View style={styles.detailRow}>
     <Text style={styles.detailLabel}>Recipient:</Text>
     <Text style={styles.detailValue}>{recipient}</Text>
   </View>
-  
+
   <View style={styles.detailRow}>
     <Text style={styles.detailLabel}>Network:</Text>
     <Text style={styles.detailValue}>Base Mainnet</Text>
   </View>
-  
+
+  <View style={styles.detailRow}>
+  <Text style={styles.detailLabel}>Date:</Text>
+  <Text style={styles.detailValue}>{date}</Text>
+</View>
+
   {transactionHash && (
     <View style={styles.detailRow}>
       <Text style={styles.detailLabel}>Transaction Hash:</Text>
@@ -144,15 +122,6 @@ export default function TransactionSuccessScreen() {
     </View>
   )}
 
-  {userOpHash && userOpHash !== transactionHash && (
-    <View style={styles.detailRow}>
-      <Text style={styles.detailLabel}>User Op Hash:</Text>
-      <Text style={[styles.detailValue, { fontFamily: "monospace", fontSize: 12 }]}>
-        {formatHash(userOpHash)}
-      </Text>
-    </View>
-  )}
-
   <View style={styles.statusBadge}>
     <Ionicons name="checkmark-circle" size={16} color="#34C759" />
     <Text style={styles.statusText}>Confirmed on Base</Text>
@@ -160,13 +129,9 @@ export default function TransactionSuccessScreen() {
 </View>
 
         {/* Action Buttons */}
-        <Animated.View
+        <View
           style={[
-            styles.actionButtons,
-            {
-              opacity: opacityAnim,
-              transform: [{ translateY: slideAnim }],
-            },
+            styles.actionButtons
           ]}
         >
           <TouchableOpacity style={styles.shareButton} onPress={handleShare}>
@@ -180,23 +145,9 @@ export default function TransactionSuccessScreen() {
               <Text style={styles.explorerButtonText}>View on Explorer</Text>
             </TouchableOpacity>
           )}
-        </Animated.View>
+        </View>
       </View>
 
-      {/* Home Button */}
-      <Animated.View
-        style={[
-          styles.bottomButton,
-          {
-            opacity: opacityAnim,
-            transform: [{ translateY: slideAnim }],
-          },
-        ]}
-      >
-        <TouchableOpacity style={styles.homeButton} onPress={handleGoHome}>
-          <Text style={styles.homeButtonText}>Back to Home</Text>
-        </TouchableOpacity>
-      </Animated.View>
     </SafeAreaView>
   );
 }
@@ -370,4 +321,65 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
   },
+  header: {
+  flexDirection: "row",
+  alignItems: "center",
+  paddingHorizontal: 20,
+  paddingVertical: 15,
+  borderBottomWidth: 1,
+  borderBottomColor: "#f0f0f0",
+},
+backButton: {
+  padding: 5,
+},
+headerTitle: {
+  flex: 1,
+  textAlign: "center",
+  fontSize: 18,
+  fontWeight: "600",
+  color: "#34C759",
+},
+placeholder: {
+  width: 38,
+},
+recipientInitial: {
+  fontSize: 32,
+  fontWeight: "bold",
+  color: "#fff",
+},
+email: {
+  fontSize: 14,
+  color: "#666",
+  marginBottom: 20,
+},
+messageText: {
+  fontSize: 16,
+  color: "#666",
+  textAlign: "center",
+  marginBottom: 20,
+  fontStyle: "italic",
+},
+statusRow: {
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "center",
+  marginBottom: 10,
+},
+completedText: {
+  fontSize: 16,
+  color: "#34C759",
+  fontWeight: "600",
+  marginLeft: 6,
+},
+divider: {
+  height: 1,
+  backgroundColor: "#e0e0e0",
+  width: "100%",
+  marginBottom: 10,
+},
+dateText: {
+  fontSize: 14,
+  color: "#666",
+  textAlign: "center",
+},
 });

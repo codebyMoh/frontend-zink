@@ -11,6 +11,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import {
+  Alert,
   ImageBackground,
   ScrollView,
   StyleSheet,
@@ -18,6 +19,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import Toast from "react-native-toast-message";
 
 export default function ProfileScreen() {
   const user = useUser()
@@ -43,6 +45,7 @@ useEffect(() => {
     router.replace("/sign-in");
   }
   return (
+    <>
     <ScrollView style={styles.container}>
       <View>
         <ImageBackground
@@ -56,6 +59,21 @@ useEffect(() => {
           <View style={styles.headerContent}>
             <View>
               <Text style={styles.name}>{userName}</Text>
+              {/* <TouchableOpacity 
+  onPress={async () => {
+    await Clipboard.setStringAsync(userName);
+    Toast.show({
+      type: 'success',
+      text1: 'Copied!',
+      text2: 'Username copied to clipboard',
+      visibilityTime: 2000,
+      position: 'bottom'
+    });
+  }}
+  style={styles.copyButton}
+>
+  <Ionicons name="copy-outline" size={16} color="#000" />
+</TouchableOpacity> */}
               <Text style={styles.subText}>Email ID: {user?.email}</Text>
             </View>
             <TouchableOpacity
@@ -102,6 +120,17 @@ useEffect(() => {
           </View>
         </TouchableOpacity>
 
+      {/* Your Payment ID */}
+<TouchableOpacity style={styles.option}>
+  <MaterialIcons name="account-balance-wallet" size={24} color="#4CAF50" />
+  <View>
+    <Text style={styles.optionText}>Your Payment ID</Text>
+    <Text style={styles.smallText}>
+      Share your unique payment identifier
+    </Text>
+  </View>
+</TouchableOpacity>
+
         {/* Autopay */}
         <TouchableOpacity style={styles.option}>
           <MaterialCommunityIcons
@@ -115,8 +144,9 @@ useEffect(() => {
           </View>
         </TouchableOpacity>
 
+
         {/* UPI Circle */}
-        <TouchableOpacity style={styles.option}>
+        {/* <TouchableOpacity style={styles.option}>
           <MaterialIcons name="wifi-tethering" size={24} color="#4CAF50" />
           <View>
             <Text style={styles.optionText}>UPI Circle</Text>
@@ -124,7 +154,7 @@ useEffect(() => {
               Help people you trust make UPI payments
             </Text>
           </View>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         {/* Settings */}
         <TouchableOpacity style={styles.option}>
@@ -161,10 +191,21 @@ useEffect(() => {
         </TouchableOpacity>
       </View>
     </ScrollView>
+    <Toast />
+    </>
+
   );
 }
 
 const styles = StyleSheet.create({
+  nameContainer: {
+  flexDirection: "row",
+  alignItems: "center",
+  gap: 8,
+},
+copyButton: {
+  padding: 4,
+},
   container: {
     flex: 1,
     backgroundColor: "#fff",

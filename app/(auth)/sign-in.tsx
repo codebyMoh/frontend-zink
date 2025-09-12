@@ -1,3 +1,5 @@
+import { useAppAuth } from "@/hooks/useAppAuth";
+import { AppLoadingIndicator } from "@/src/components/app-loading";
 import { useAuthenticate, useSignerStatus } from "@account-kit/react-native";
 import { AntDesign } from "@expo/vector-icons";
 import { Redirect, router, useRouter } from "expo-router";
@@ -19,6 +21,8 @@ export default function SignIn() {
     // const router = useRouter();
     const { authenticateAsync } = useAuthenticate();
     const { isConnected } = useSignerStatus();
+    const { isAppAuthenticated, isLoading: authLoading } = useAppAuth();
+
 
     const onSignIn = useCallback(async () => {
         setErrorMessage("");
@@ -55,9 +59,13 @@ export default function SignIn() {
         }
     }, [email, authenticateAsync, router]);
 
-    if (isConnected) {
-        return <Redirect href="/(main)" />;
-    }
+//     if (authLoading) {
+//     return <AppLoadingIndicator />;
+// }
+
+if (isAppAuthenticated) {
+    return <Redirect href="/(main)" />;
+}
 
     return (
         <SafeAreaView style={styles.container}>
