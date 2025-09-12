@@ -57,7 +57,7 @@ export default function ShareQRCodeScreen() {
     const userData = await TokenManager.getUserData();
     if (userData?._id) {
       setUserId(userData?._id || null);
-      setUserName(userData?.userName || null);
+      setUserName(userData?.paymentId || null);
     }
   };
 
