@@ -57,13 +57,18 @@ export default function SearchPaymentsScreen() {
 
   //       const [sentTxs, receivedTxs] = await Promise.all([
   //         getSentTransactions(1, 10),
-  //         getReceivedTransactions(1, 10)
+  //         getReceivedTransactions(1, 10),
   //       ]);
 
-  //       const allTxs = [...sentTxs, ...receivedTxs]
-  //         .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  //       const allTxs = [...sentTxs, ...receivedTxs].sort(
+  //         (a, b) =>
+  //           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  //       );
 
-  //       const recentContacts = convertTransactionsToUniqueContacts(allTxs, currentUserId);
+  //       const recentContacts = convertTransactionsToUniqueContacts(
+  //         allTxs,
+  //         currentUserId
+  //       );
   //       setRecentTransactions(recentContacts.slice(0, 5));
   //     } catch (error) {
   //       console.error("Failed to load recent transactions:", error);
@@ -159,43 +164,44 @@ export default function SearchPaymentsScreen() {
       userData: user,
     }));
   };
-  const performSearch = async (query: string) => {
-    setIsLoading(true);
-    setSearchError("");
 
-    try {
-      const response = await searchUserByUserName(query);
-      if (response.success && response.data?.users) {
-        const contactItems = convertApiUsersToContacts(response.data.users);
-        setSearchResults(contactItems);
-      } else {
-        setSearchResults([]);
-        setSearchError("No users found");
-      }
-    } catch (error: any) {
-      console.error("Search error:", error);
-      setSearchResults([]);
-      setSearchError(error.message || "Failed to search users");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+   const performSearch = async (query: string) => {
+     setIsLoading(true);
+     setSearchError("");
 
-  // creating debounce function
-  const debounsPerformSearch = useCallback(debouncing(performSearch, 700), []);
+     try {
+       const response = await searchUserByUserName(query);
+       if (response.success && response.data?.users) {
+         const contactItems = convertApiUsersToContacts(response.data.users);
+         setSearchResults(contactItems);
+       } else {
+         setSearchResults([]);
+         setSearchError("No users found");
+       }
+     } catch (error: any) {
+       console.error("Search error:", error);
+       setSearchResults([]);
+       setSearchError(error.message || "Failed to search users");
+     } finally {
+       setIsLoading(false);
+     }
+   };
 
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (searchText.trim().length >= 3) {
-        debounsPerformSearch(searchText.trim());
-      } else {
-        setSearchResults([]);
-        setSearchError("");
-      }
-    }, 500);
+   // creating debounce function
+   const debounsPerformSearch = useCallback(debouncing(performSearch, 700), []);
 
-    return () => clearTimeout(timeoutId);
-  }, [searchText]);
+   useEffect(() => {
+     const timeoutId = setTimeout(() => {
+       if (searchText.trim().length >= 3) {
+         debounsPerformSearch(searchText.trim());
+       } else {
+         setSearchResults([]);
+         setSearchError("");
+       }
+     }, 500);
+
+     return () => clearTimeout(timeoutId);
+   }, [searchText]);
 
   const filteredRecentTransactions =
     searchText.trim().length > 0
@@ -226,20 +232,25 @@ export default function SearchPaymentsScreen() {
     console.log("Selected person:", person);
     if (person.userData) {
       router.replace({
-        pathname: "/pay",
+        pathname: "/payment_chat",
         params: {
           recipientAddress: person.userData.smartWalletAddress,
           recipientId: person.userData._id,
           recipientName: person.name,
-          recipientUsername: person.name,
+          recipientUsername: person.userData.userName || person.name,
         },
       });
     } else {
-      // ??? Handle cases with no userData
-      router.replace("/pay");
+      // Handle cases with no userData - redirect to payment_chat with basic info
+      router.replace({
+        pathname: "/payment_chat",
+        params: {
+          recipientName: person.name,
+          recipientUsername: person.name,
+        },
+      });
     }
   };
-
   return (
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
@@ -278,6 +289,12 @@ export default function SearchPaymentsScreen() {
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#007AFF" />
             <Text style={styles.loadingText}>Searching users...</Text>
+          </View>
+        )}
+
+        {searchError && !isLoading && (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{searchError}</Text>
           </View>
         )}
 
