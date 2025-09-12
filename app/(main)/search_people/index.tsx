@@ -191,20 +191,25 @@ const handlePersonPress = (person: ContactItem) => {
   console.log("Selected person:", person);
    if (person.userData) {
      router.replace({
-        pathname: "/pay",
+        pathname: "/(main)/payment_chat",
         params: {
           recipientAddress: person.userData.smartWalletAddress,
           recipientId: person.userData._id,
           recipientName: person.name,
-          recipientUsername: person.name,
+          recipientUsername: person.userData.userName || person.name,
         }
      });
    } else {
-     // ??? Handle cases with no userData
-     router.replace("/pay");
+     // Handle cases with no userData - redirect to payment_chat with basic info
+     router.replace({
+        pathname: "/(main)/payment_chat",
+        params: {
+          recipientName: person.name,
+          recipientUsername: person.name,
+        }
+     });
    }
 };
-
   return (
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
