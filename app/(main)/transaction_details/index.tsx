@@ -93,7 +93,7 @@ export default function TransactionSuccessScreen() {
 
   <View style={styles.detailRow}>
     <Text style={styles.detailLabel}>Amount:</Text>
-    <Text style={styles.detailValue}>${amount} USDC</Text>
+    <Text style={styles.detailValue}>{amount} USDC</Text>
   </View>
 
   <View style={styles.detailRow}>

@@ -24,7 +24,7 @@ interface Transaction {
 
 export default function PaymentChatScreen() {
   const params = useLocalSearchParams();
-  const recipientName = params.recipientName as string || "Unknown User";
+  const recipientName = params.recipientName as string || "Lacey Turner";
   const recipientUsername = params.recipientUsername as string || "";
   const recipientId = params.recipientId as string || "";
 
@@ -151,7 +151,7 @@ export default function PaymentChatScreen() {
                 )}
 
                 <Text style={[styles.transactionAmount,transaction.type === 'sent' && styles.sentText]}>
-                  {transaction.currency}{transaction.amount.toLocaleString('en-IN')}
+                  {transaction.amount.toLocaleString('en-IN')} {transaction.currency}
                 </Text>
 
                 <View style={styles.transactionStatus}>

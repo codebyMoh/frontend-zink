@@ -32,7 +32,7 @@ const ProfileIconSection: React.FC<PeopleListWithToggleProps> = ({
     <TouchableOpacity
       key={person.id}
       style={styles.personItem}
-      onPress={() => router.push("/pay")}
+      onPress={() => router.push("/payment_chat")}
     >
       <View style={[styles.personAvatar, { backgroundColor: person.bgColor }]}>
         <Text style={styles.personAvatarText}>{person.initial}</Text>

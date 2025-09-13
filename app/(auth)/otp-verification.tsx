@@ -5,6 +5,7 @@ import {
   ActivityIndicator,
   Alert,
   Keyboard,
+  Modal,
   NativeSyntheticEvent,
   SafeAreaView,
   StyleSheet,
@@ -16,7 +17,7 @@ import {
 } from "react-native";
 import { useAuthenticate, useLogout, useSignerStatus, useSmartAccountClient, useUser } from "@account-kit/react-native";
 import { TokenManager } from "@/services/tokenManager";
-import { registerUser } from "@/services/api/user";
+import { registerUser, addUserFullName } from "@/services/api/user";
 
 export default function OTPScreen() {
   const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
@@ -25,10 +26,17 @@ export default function OTPScreen() {
   const [isResending, setIsResending] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [shouldRegister, setShouldRegister] = useState<boolean>(false);
+  const [smartWalletAddress, setSmartWalletAddress] = useState<string | null>(null);
+  
+  const [showUsernamePopup, setShowUsernamePopup] = useState<boolean>(false);
+  const [fullName, setFullName] = useState<string>("");
+  const [usernameError, setUsernameError] = useState<string>("");
+  const [isSubmittingUsername, setIsSubmittingUsername] = useState<boolean>(false);
+  const [registrationResponse, setRegistrationResponse] = useState<any>(null);
 
   const { email } = useLocalSearchParams<{ email: string }>();
   const { authenticate, authenticateAsync } = useAuthenticate();
-const { isConnected } = useSignerStatus();
+  const { isConnected } = useSignerStatus();
   const userData = useUser();
 
   const { client } = useSmartAccountClient({
@@ -38,6 +46,13 @@ const { isConnected } = useSignerStatus();
   const { logout } = useLogout();
 
   const inputRefs = useRef<Array<TextInput | null>>([]);
+
+  useEffect(() => {
+    if (client?.account?.address && !smartWalletAddress) {
+      console.log("Capturing smart wallet address:", client.account.address);
+      setSmartWalletAddress(client.account.address);
+    }
+  }, [client?.account?.address, smartWalletAddress]);
 
   useEffect(() => {
     let timer: number | undefined;
@@ -56,57 +71,99 @@ const { isConnected } = useSignerStatus();
   }, [isResending, resendTimer]);
   
   
-useEffect(() => {
-  const handleRegistration = async () => {
-    if (!shouldRegister) return;
+  useEffect(() => {
+    const handleRegistration = async () => {
+      if (!shouldRegister) return;
 
-    if (!userData || !client?.account?.address) {
-      return;
-    }
+      if (!userData || !smartWalletAddress) {
+  return;
+}
 
-    try {
-      const smartWalletAddress = client.account.address;
+      try {
+        // const smartWalletAddress = client.account.address;
 
-      if (userData.email && userData.solanaAddress && smartWalletAddress) {
-        const response = await registerUser({
-          email: userData.email,
-          addressEvm: userData.address,
-          addressSolana: userData.solanaAddress,
-          smartWalletAddress: smartWalletAddress,
-          userId: userData.userId,
-          orgId: userData.orgId,
-        });
+        if (userData.email && userData.solanaAddress && smartWalletAddress) {
+          const response = await registerUser({
+            email: userData.email,
+            addressEvm: userData.address,
+            addressSolana: userData.solanaAddress,
+            smartWalletAddress: smartWalletAddress,
+            userId: userData.userId,
+            orgId: userData.orgId,
+          });
 
-        await TokenManager.saveToken(response.data.token);
-        await TokenManager.saveUserData(response.data.user);
-
-        router.replace("/");
-      } else {
-        console.error("Missing required user data:", {
-          email: userData?.email,
-          solanaAddress: userData?.solanaAddress,
-          smartWalletAddress,
-        });
-        setErrorMessage("Failed to get user information. Please try again.");
+          if (response.data.user.userName === null) {
+            setRegistrationResponse(response);
+            setShowUsernamePopup(true);
+          } else {
+            await TokenManager.saveToken(response.data.token);
+            await TokenManager.saveUserData(response.data.user);
+            router.replace("/");
+          }
+        } else {
+          console.error("Missing required user data:", {
+            email: userData?.email,
+            solanaAddress: userData?.solanaAddress,
+            smartWalletAddress,
+          });
+          setErrorMessage("Failed to get user information. Please try again.");
+          // Logout from Account Kit when backend registration fails
+          await logout();
+          await TokenManager.clearAll();
+        }
+      } catch (registrationError) {
+        console.error("Backend registration failed:", registrationError);
+        setErrorMessage("Registration failed. Please try again.");
         // Logout from Account Kit when backend registration fails
         await logout();
+        // Clear any stored tokens
         await TokenManager.clearAll();
+      } finally {
+        setIsLoading(false);
+        setShouldRegister(false);
       }
-    } catch (registrationError) {
-      console.error("Backend registration failed:", registrationError);
-      setErrorMessage("Registration failed. Please try again.");
-      // Logout from Account Kit when backend registration fails
-      await logout();
-      // Clear any stored tokens
-      await TokenManager.clearAll();
-    } finally {
-      setIsLoading(false);
-      setShouldRegister(false);
-    }
-  };
+    };
 
-  handleRegistration();
-}, [shouldRegister, client?.account?.address, userData, logout]);
+    handleRegistration();
+  }, [shouldRegister, smartWalletAddress, userData, logout]);
+
+  const handleUsernameSubmit = async () => {
+  setUsernameError("");
+  
+  if (!fullName.trim()) {
+    setUsernameError("Full name is required");
+    return;
+  }
+
+  if (fullName.trim().length < 3) {
+    setUsernameError("Full name must be at least 3 characters");
+    return;
+  }
+
+  if (fullName.trim().length > 15) {
+    setUsernameError("Full name cannot exceed 15 characters");
+    return;
+  }
+
+  setIsSubmittingUsername(true);
+
+  try {
+    await TokenManager.saveToken(registrationResponse.data.token);
+    const updateResponse = await addUserFullName(fullName.trim());
+    
+    await TokenManager.saveUserData(updateResponse.data.user);
+    
+    // const updatedUSer = await TokenManager.getUserData();
+    // console.log("Updated user data:", updatedUSer);
+    setShowUsernamePopup(false);
+    router.replace("/");
+  } catch (error) {
+    console.error("Failed to update username:", error);
+    setUsernameError("Failed to update username. Please try again.");
+  } finally {
+    setIsSubmittingUsername(false);
+  }
+};
 
 
   const handleOtpChange = (text: string, index: number) => {
@@ -132,33 +189,32 @@ useEffect(() => {
   };
 
   const handleVerifyOtp = async () => {
-  setErrorMessage("");
-  setIsLoading(true);
-  const fullOtp = otp.join("");
+    setErrorMessage("");
+    setIsLoading(true);
+    const fullOtp = otp.join("");
 
-  if (fullOtp.length !== 6 || !/^\d+$/.test(fullOtp)) {
-    setErrorMessage("Please enter a valid 6-digit OTP.");
-    setIsLoading(false);
-    return;
-  }
+    if (fullOtp.length !== 6 || !/^\d+$/.test(fullOtp)) {
+      setErrorMessage("Please enter a valid 6-digit OTP.");
+      setIsLoading(false);
+      return;
+    }
 
-   try {
-    await authenticate({
-      otpCode: fullOtp,
-      type: "otp",
-    });
-    
-    
-    clearOtpInputs();
-    setShouldRegister(true);
-    
-  } catch (error) {
-    console.error("OTP verification failed:", error);
-    setErrorMessage("Invalid OTP. Please try again.");
-    setIsLoading(false);
-    clearOtpInputs();
-  }
-};
+    try {
+      await authenticate({
+        otpCode: fullOtp,
+        type: "otp",
+      });
+      
+      clearOtpInputs();
+      setShouldRegister(true);
+      
+    } catch (error) {
+      console.error("OTP verification failed:", error);
+      setErrorMessage("Invalid OTP. Please try again.");
+      setIsLoading(false);
+      clearOtpInputs();
+    }
+  };
 
   const handleResendOtp = async () => {
     if (!email) {
@@ -187,9 +243,9 @@ useEffect(() => {
   };
 
   const clearOtpInputs = () => {
-  setOtp(["", "", "", "", "", ""]);
-  inputRefs.current[0]?.focus();
-};
+    setOtp(["", "", "", "", "", ""]);
+    inputRefs.current[0]?.focus();
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -269,6 +325,64 @@ useEffect(() => {
           </TouchableOpacity>
         </View>
       </View>
+
+      <Modal
+        visible={showUsernamePopup}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => {}}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <AntDesign name="user" size={24} color="#34C759" />
+              <Text style={styles.modalTitle}>Complete Your Profile</Text>
+            </View>
+            
+            <Text style={styles.modalSubtitle}>
+              Please enter your full name to complete your account setup.
+            </Text>
+
+            <View style={styles.inputGroup}>
+              <AntDesign
+                name="user"
+                size={20}
+                color="#888"
+                style={styles.inputIcon}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your full name"
+                placeholderTextColor="#888"
+                value={fullName}
+                onChangeText={setFullName}
+                editable={!isSubmittingUsername}
+                autoCapitalize="words"
+                autoFocus={true}
+              />
+            </View>
+
+            {usernameError ? (
+              <Text style={styles.errorMessage}>{usernameError}</Text>
+            ) : null}
+
+            <TouchableOpacity
+              style={[
+                styles.submitButton,
+                { opacity: isSubmittingUsername || !fullName.trim() ? 0.5 : 1 }
+              ]}
+              onPress={handleUsernameSubmit}
+              disabled={isSubmittingUsername || !fullName.trim()}
+            >
+              {isSubmittingUsername ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.submitButtonText}>Continue</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -376,5 +490,84 @@ const styles = StyleSheet.create({
   },
   resendLinkDisabled: {
     color: "#888",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    padding: 30,
+    width: "100%",
+    maxWidth: 400,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  modalHeader: {
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#000",
+    marginTop: 10,
+    textAlign: "center",
+  },
+  modalSubtitle: {
+    fontSize: 16,
+    color: "#555",
+    marginBottom: 30,
+    textAlign: "center",
+    lineHeight: 22,
+  },
+  inputGroup: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f0f0f0",
+    borderRadius: 15,
+    paddingHorizontal: 15,
+    marginBottom: 15,
+    width: "100%",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  inputIcon: {
+    marginRight: 10,
+  },
+  input: {
+    flex: 1,
+    height: 50,
+    color: "#000",
+    fontSize: 16,
+  },
+  submitButton: {
+    backgroundColor: "#34C759",
+    borderRadius: 15,
+    paddingVertical: 15,
+    width: "100%",
+    alignItems: "center",
+    marginTop: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  submitButtonText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "bold",
   },
 });
