@@ -3,7 +3,6 @@ import { Stack, router, useLocalSearchParams } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Keyboard,
   Modal,
   NativeSyntheticEvent,
@@ -15,7 +14,12 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useAuthenticate, useLogout, useSignerStatus, useSmartAccountClient, useUser } from "@account-kit/react-native";
+import {
+  useAuthenticate,
+  useLogout,
+  useSmartAccountClient,
+  useUser,
+} from "@account-kit/react-native";
 import { TokenManager } from "@/services/tokenManager";
 import { registerUser, addUserFullName } from "@/services/api/user";
 
@@ -26,17 +30,19 @@ export default function OTPScreen() {
   const [isResending, setIsResending] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [shouldRegister, setShouldRegister] = useState<boolean>(false);
-  const [smartWalletAddress, setSmartWalletAddress] = useState<string | null>(null);
-  
+  const [smartWalletAddress, setSmartWalletAddress] = useState<string | null>(
+    null
+  );
+
   const [showUsernamePopup, setShowUsernamePopup] = useState<boolean>(false);
-  const [fullName, setFullName] = useState<string>("");
+  const [userName, setUserName] = useState<string>("");
   const [usernameError, setUsernameError] = useState<string>("");
-  const [isSubmittingUsername, setIsSubmittingUsername] = useState<boolean>(false);
+  const [isSubmittingUsername, setIsSubmittingUsername] =
+    useState<boolean>(false);
   const [registrationResponse, setRegistrationResponse] = useState<any>(null);
 
   const { email } = useLocalSearchParams<{ email: string }>();
   const { authenticate, authenticateAsync } = useAuthenticate();
-  const { isConnected } = useSignerStatus();
   const userData = useUser();
 
   const { client } = useSmartAccountClient({
@@ -69,15 +75,14 @@ export default function OTPScreen() {
       }
     };
   }, [isResending, resendTimer]);
-  
-  
+
   useEffect(() => {
     const handleRegistration = async () => {
       if (!shouldRegister) return;
 
       if (!userData || !smartWalletAddress) {
-  return;
-}
+        return;
+      }
 
       try {
         // const smartWalletAddress = client.account.address;
@@ -92,7 +97,7 @@ export default function OTPScreen() {
             orgId: userData.orgId,
           });
 
-          if (response.data.user.userName === null) {
+          if (!response?.data?.user?.userName) {
             setRegistrationResponse(response);
             setShowUsernamePopup(true);
           } else {
@@ -128,43 +133,43 @@ export default function OTPScreen() {
   }, [shouldRegister, smartWalletAddress, userData, logout]);
 
   const handleUsernameSubmit = async () => {
-  setUsernameError("");
-  
-  if (!fullName.trim()) {
-    setUsernameError("Full name is required");
-    return;
-  }
+    setUsernameError("");
+    const usernameRegex = /^[a-zA-Z0-9._]{3,20}$/;
 
-  if (fullName.trim().length < 3) {
-    setUsernameError("Full name must be at least 3 characters");
-    return;
-  }
+    if (!userName.trim()) {
+      setUsernameError("Full name is required");
+      return;
+    }
 
-  if (fullName.trim().length > 15) {
-    setUsernameError("Full name cannot exceed 15 characters");
-    return;
-  }
+    if (!usernameRegex.test(userName?.toString())) {
+      setUsernameError(
+        "Use letters (A–Z, a–z), numbers (0–9), dots (.), and underscores (_). Length must be between 3 and 20 characters. Cannot start or end with a dot or underscore. Dots and underscores cannot be used consecutively."
+      );
+      return;
+    }
 
-  setIsSubmittingUsername(true);
+    setIsSubmittingUsername(true);
 
-  try {
-    await TokenManager.saveToken(registrationResponse.data.token);
-    const updateResponse = await addUserFullName(fullName.trim());
-    
-    await TokenManager.saveUserData(updateResponse.data.user);
-    
-    // const updatedUSer = await TokenManager.getUserData();
-    // console.log("Updated user data:", updatedUSer);
-    setShowUsernamePopup(false);
-    router.replace("/");
-  } catch (error) {
-    console.error("Failed to update username:", error);
-    setUsernameError("Failed to update username. Please try again.");
-  } finally {
-    setIsSubmittingUsername(false);
-  }
-};
+    try {
+      await TokenManager.saveToken(registrationResponse.data.token);
+      const updateResponse = await addUserFullName(
+        userName?.toString()?.trim()
+      );
 
+      await TokenManager.saveUserData(updateResponse.data.user);
+
+      // const updatedUSer = await TokenManager.getUserData();
+      // console.log("Updated user data:", updatedUSer);
+      setShowUsernamePopup(false);
+      router.replace("/");
+    } catch (error) {
+      setUsernameError(
+        (error as Error)?.message || "Failed to update username."
+      );
+    } finally {
+      setIsSubmittingUsername(false);
+    }
+  };
 
   const handleOtpChange = (text: string, index: number) => {
     const newOtp = [...otp];
@@ -204,10 +209,9 @@ export default function OTPScreen() {
         otpCode: fullOtp,
         type: "otp",
       });
-      
+
       clearOtpInputs();
       setShouldRegister(true);
-      
     } catch (error) {
       console.error("OTP verification failed:", error);
       setErrorMessage("Invalid OTP. Please try again.");
@@ -263,8 +267,8 @@ export default function OTPScreen() {
       <View style={styles.content}>
         <Text style={styles.title}>Verify your account</Text>
         <Text style={styles.subtitle}>
-          We have sent a 6-digit OTP to {email ? `${email}` : 'your email address'}. 
-          Please enter it below.
+          We have sent a 6-digit OTP to{" "}
+          {email ? `${email}` : "your email address"}. Please enter it below.
         </Text>
 
         {/* OTP Input Fields */}
@@ -338,9 +342,9 @@ export default function OTPScreen() {
               <AntDesign name="user" size={24} color="#34C759" />
               <Text style={styles.modalTitle}>Complete Your Profile</Text>
             </View>
-            
+
             <Text style={styles.modalSubtitle}>
-              Please enter your full name to complete your account setup.
+              Please create your username to complete your account setup.
             </Text>
 
             <View style={styles.inputGroup}>
@@ -352,10 +356,10 @@ export default function OTPScreen() {
               />
               <TextInput
                 style={styles.input}
-                placeholder="Enter your full name"
+                placeholder="Enter username"
                 placeholderTextColor="#888"
-                value={fullName}
-                onChangeText={setFullName}
+                value={userName}
+                onChangeText={setUserName}
                 editable={!isSubmittingUsername}
                 autoCapitalize="words"
                 autoFocus={true}
@@ -369,10 +373,10 @@ export default function OTPScreen() {
             <TouchableOpacity
               style={[
                 styles.submitButton,
-                { opacity: isSubmittingUsername || !fullName.trim() ? 0.5 : 1 }
+                { opacity: isSubmittingUsername || !userName.trim() ? 0.5 : 1 },
               ]}
               onPress={handleUsernameSubmit}
-              disabled={isSubmittingUsername || !fullName.trim()}
+              disabled={isSubmittingUsername || !userName.trim()}
             >
               {isSubmittingUsername ? (
                 <ActivityIndicator color="#fff" />
@@ -450,10 +454,10 @@ const styles = StyleSheet.create({
   },
   errorMessage: {
     color: "red",
-    fontSize: 14,
+    fontSize: 12,
     textAlign: "center",
     marginBottom: 15,
-    marginHorizontal: 20,
+    marginHorizontal: 10,
   },
   verifyButton: {
     backgroundColor: "#34C759",
