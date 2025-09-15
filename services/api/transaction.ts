@@ -9,10 +9,14 @@ export interface ApiTransaction {
   tx: string;
   recipientAddress: string;
   currency: string;
+  message: string;
+  recipientPaymentId: string;
+  userPaymentId: string;
   createdAt: string;
   updatedAt: string;
   recipientUserName?: string;
   userName?: string;
+  __v: number;
 }
 
 export interface TransactionResponse {
@@ -143,6 +147,66 @@ export const searchTransactionsByUsername = async (search: string): Promise<ApiT
     return data.data.transactions || [];
   } catch (error) {
     console.error("Search transactions API error:", error);
+    throw error;
+  }
+};
+
+export const getRecentTransactions = async (): Promise<ApiTransaction[]> => {
+  try {
+    const token = await TokenManager.getToken();
+
+    const response = await fetch(
+      `${ENV.API_BASE_URL_TRANSACTION}/getRecentTransaction`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to fetch recent transactions");
+    }
+
+    const data = await response.json();
+    return data.data.transactions || [];
+  } catch (error) {
+    console.error("Get recent transactions API error:", error);
+    throw error;
+  }
+};
+
+export const getTransactionsForTwoUsers = async (
+  page: number = 1,
+  limit: number = 20,
+  recipientId: string
+): Promise<ApiTransaction[]> => {
+  try {
+    const token = await TokenManager.getToken();
+
+    const response = await fetch(
+      `${ENV.API_BASE_URL_TRANSACTION}/getTransactionsForTwoUser/${page}/${limit}/${recipientId}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to fetch transactions for two users");
+    }
+
+    const data = await response.json();
+    return data.data.transactions || [];
+  } catch (error) {
+    console.error("Get transactions for two users API error:", error);
     throw error;
   }
 };

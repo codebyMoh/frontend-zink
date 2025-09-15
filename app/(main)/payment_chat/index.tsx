@@ -1,6 +1,8 @@
+import { ApiTransaction, getTransactionsForTwoUsers } from "@/services/api/transaction";
+import { TokenManager } from "@/services/tokenManager";
 import { AntDesign } from "@expo/vector-icons";
 import { Stack, router, useLocalSearchParams } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Platform,
   SafeAreaView,
@@ -11,55 +13,46 @@ import {
   View,
 } from "react-native";
 
-interface Transaction {
-  id: string;
-  type: 'sent' | 'received';
-  amount: number;
-  currency: string;
-  date: string;
-  time: string;
-  status: 'paid' | 'pending' | 'failed';
-  description?: string;
-}
-
 export default function PaymentChatScreen() {
   const params = useLocalSearchParams();
   const recipientName = params.recipientName as string || "Lacey Turner";
   const recipientUsername = params.recipientUsername as string || "";
   const recipientId = params.recipientId as string || "";
 
-  // Mock transaction data - replace with API call later
-  const [transactions] = useState<Transaction[]>([
-    {
-      id: '1',
-      type: 'sent',
-      amount: 1637,
-      currency: 'USDC',
-      date: '12 Aug',
-      time: '9:45 am',
-      status: 'paid',
-    },
-    {
-      id: '2',
-      type: 'received',
-      amount: 500,
-      currency: 'USDC',
-      date: '20 Aug',
-      time: '9:57 pm',
-      status: 'paid',
-      description: 'airbnb refund'
-    },
-    {
-      id: '3',
-      type: 'received',
-      amount: 3802,
-      currency: 'USDC',
-      date: '24 Aug',
-      time: '7:56 pm',
-      status: 'paid',
-      description: 'amazon refund'
+  const [transactions, setTransactions] = useState<ApiTransaction[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  useEffect(() => {
+    const loadCurrentUser = async () => {
+      try {
+        const userData = await TokenManager.getUserData();
+        setCurrentUser(userData);
+      } catch (error) {
+        console.error("Failed to load current user:", error);
+      }
+    };
+    loadCurrentUser();
+  }, []);
+
+  useEffect(() => {
+    if (recipientId) {
+      loadTransactions();
     }
-  ]);
+  }, [recipientId]);
+
+  const loadTransactions = async () => {
+    try {
+      setIsLoading(true);
+      const apiTransactions = await getTransactionsForTwoUsers(1, 20, recipientId);
+      setTransactions(apiTransactions);
+    } catch (error) {
+      console.error("Failed to load transactions:", error);
+      setTransactions([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const getInitial = (name: string) => {
     return name.charAt(0).toUpperCase();
@@ -87,8 +80,85 @@ export default function PaymentChatScreen() {
     console.log("Request payment from", recipientName);
   };
 
-  const formatDate = (dateStr: string, timeStr: string) => {
-    return `${dateStr}, ${timeStr}`;
+  const renderTransaction = (transaction: ApiTransaction) => {
+    if (!currentUser) return null;
+    
+    const isCurrentUserSender = transaction.userId === currentUser._id;
+    const transactionType = isCurrentUserSender ? 'sent' : 'received';
+    
+    return (
+      <View key={transaction._id}>
+        {/* Date separator */}
+        <View style={styles.dateSeparator}>
+          <View style={styles.dateSeparatorLine} />
+          <Text style={styles.dateSeparatorText}>
+            {new Date(transaction.createdAt).toLocaleDateString('en-US', {
+              month: 'short',
+              day: 'numeric'
+            })}, {new Date(transaction.createdAt).toLocaleTimeString('en-US', {
+              hour: 'numeric',
+              minute: '2-digit'
+            })}
+          </Text>
+          <View style={styles.dateSeparatorLine} />
+        </View>
+
+        {/* Transaction card */}
+        <View style={[
+          styles.transactionCard, 
+          transactionType === 'sent' ? styles.sentCard : styles.receivedCard
+        ]}>
+          <Text style={[
+            styles.transactionTitle,
+            transactionType === 'sent' && styles.sentText
+          ]}>
+            {transactionType === 'sent' 
+              ? `Payment to ${recipientName}` 
+              : 'Payment to you'}
+          </Text>
+          
+          {transaction.message && (
+            <Text style={[
+              styles.transactionDescription,
+              transactionType === 'sent' && styles.sentText
+            ]}>
+              {transaction.message}
+            </Text>
+          )}
+
+          <Text style={[
+            styles.transactionAmount,
+            transactionType === 'sent' && styles.sentText
+          ]}>
+            {transaction.amount.toLocaleString('en-IN')} {transaction.currency}
+          </Text>
+
+          <View style={styles.transactionStatus}>
+            <View style={[
+              styles.statusIndicator, 
+              { backgroundColor: '#4CAF50' }
+            ]} />
+            <Text style={[
+              styles.statusText,
+              { 
+                color: '#4CAF50'
+              }
+            ]}>
+              Paid • {new Date(transaction.createdAt).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric'
+              })}
+            </Text>
+            <AntDesign 
+              name="right" 
+              size={16} 
+              color={transactionType === 'sent' ? '#E6F2FF' : '#999'} 
+              style={styles.statusArrow} 
+            />
+          </View>
+        </View>
+      </View>
+    );
   };
 
   return (
@@ -129,55 +199,17 @@ export default function PaymentChatScreen() {
       {/* Transaction History */}
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.transactionContainer}>
-          {transactions.map((transaction, index) => (
-            <View key={transaction.id}>
-              {/* Date separator */}
-              <Text style={styles.dateSeparator}>
-                {formatDate(transaction.date, transaction.time)}
-              </Text>
-
-              {/* Transaction card */}
-              <View style={[styles.transactionCard, transaction.type === 'sent' ? styles.sentCard : styles.receivedCard]}>
-                <Text style={styles.transactionTitle}>
-                  {transaction.type === 'sent' 
-                    ? `Payment to ${recipientName}` 
-                    : 'Payment to you'}
-                </Text>
-                
-                {transaction.description && (
-                  <Text style={[styles.transactionDescription,transaction.type === 'sent' && styles.sentText]}>
-                    {transaction.description}
-                  </Text>
-                )}
-
-                <Text style={[styles.transactionAmount,transaction.type === 'sent' && styles.sentText]}>
-                  {transaction.amount.toLocaleString('en-IN')} {transaction.currency}
-                </Text>
-
-                <View style={styles.transactionStatus}>
-                  <View style={[
-                    styles.statusIndicator, 
-                    { backgroundColor: transaction.status === 'paid' ? '#4CAF50' : '#FFC107' }
-                  ]} />
-                  <Text style={[
-                    styles.statusText,
-                    { 
-                      color: transaction.status === 'paid' ? '#4CAF50' : '#FFC107',
-                      ...(transaction.type === 'sent' && { color: '#E6F2FF' })
-                    }
-                  ]}>
-                    {transaction.status === 'paid' ? 'Paid' : 'Pending'} • {transaction.date}
-                  </Text>
-                  <AntDesign 
-                    name="right" 
-                    size={16} 
-                    color={transaction.type === 'sent' ? '#E6F2FF' : '#999'} 
-                    style={styles.statusArrow} 
-                  />
-                </View>
-              </View>
+          {isLoading ? (
+            <View style={styles.loadingContainer}>
+              <Text style={styles.loadingText}>Loading transactions...</Text>
             </View>
-          ))}
+          ) : transactions.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>No transactions yet</Text>
+            </View>
+          ) : (
+             transactions.map(renderTransaction)
+          )}
         </View>
       </ScrollView>
 
@@ -186,10 +218,6 @@ export default function PaymentChatScreen() {
         <TouchableOpacity style={styles.payButton} onPress={handlePayPress}>
           <Text style={styles.payButtonText}>Pay</Text>
         </TouchableOpacity>
-        
-        {/* <TouchableOpacity style={styles.requestButton} onPress={handleRequestPress}>
-          <Text style={styles.requestButtonText}>Request</Text>
-        </TouchableOpacity> */}
       </View>
     </SafeAreaView>
   );
@@ -256,13 +284,38 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 100,
   },
-  dateSeparator: {
-    textAlign: 'center',
-    fontSize: 12,
-    color: '#999',
-    marginVertical: 20,
-    backgroundColor: '#F5F5F5',
+  loadingContainer: {
+    padding: 20,
+    alignItems: 'center',
   },
+  loadingText: {
+    fontSize: 16,
+    color: '#666',
+  },
+  emptyContainer: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#666',
+  },
+  dateSeparator: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  marginVertical: 20,
+},
+dateSeparatorText: {
+  fontSize: 12,
+  color: '#999',
+  backgroundColor: '#F5F5F5',
+  paddingHorizontal: 12,
+},
+dateSeparatorLine: {
+  flex: 1,
+  height: 1,
+  backgroundColor: '#E0E0E0',
+},
   transactionCard: {
     backgroundColor: '#FFF',
     borderRadius: 12,
@@ -339,33 +392,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  requestButton: {
-    flex: 1,
-    backgroundColor: '#F0F0F0',
-    borderRadius: 25,
-    paddingVertical: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  requestButtonText: {
-    color: '#34C759',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-
-
-sentCard: {
+  sentCard: {
     alignSelf: 'flex-end',
-    backgroundColor: '#34C759',
-},
-receivedCard: {
+    backgroundColor: '#FFF',
+  },
+  receivedCard: {
     alignSelf: 'flex-start',
     backgroundColor: '#FFF',
-},
-sentText: {
-    color: '#E6F2FF',
-},
-receivedText: {
+  },
+  sentText: {
     color: '#000',
-},
+  },
+  receivedText: {
+    color: '#000',
+  }
 });

@@ -14,8 +14,9 @@ import { useUser, useSmartAccountClient } from "@account-kit/react-native";
 import { parseAbi } from "viem";
 import MoreOptions from "./Bottom";
 import OffersAndRewards from "./OffersAndRewards";
-import ProfileIconSection from "./ProfileIconSection";
+import ProfileIconSection, { ContactItem } from "./ProfileIconSection";
 import { TokenManager } from "@/services/tokenManager";
+import { getRecentTransactions, ApiTransaction } from "@/services/api/transaction";
 
 interface BalanceState {
   usdc: string;
@@ -123,7 +124,10 @@ const dummyPeople = [
   },
 ];
 
+
 export default function WalletHomePage() {
+  const [recentPeople, setRecentPeople] = useState<ContactItem[]>([]);
+const [isLoadingPeople, setIsLoadingPeople] = useState(true);
   const [balances, setBalances] = useState<BalanceState>({
     usdc: "0",
     isLoading: true,
@@ -196,6 +200,54 @@ export default function WalletHomePage() {
   };
 
   const displayBalance = formatBalanceForDisplay(balances.usdc);
+
+  const transformTransactionToContact = (transaction: ApiTransaction): ContactItem => {
+  const recipientName = transaction.recipientUserName || "Unknown User";
+  
+  const colors = [
+    "#da7b66ff", "#a963e6ff", "#6a82eeff", "#e672b0ff", 
+    "#b571f1ff", "#647ff7ff", "#56a5ebff", "#f79951ff",
+    "#a164f1ff", "#57a2e4ff", "#a7e75eff", "#e66e84ff"
+  ];
+  
+  const colorIndex = recipientName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colors.length;
+  
+  return {
+    id: transaction.recipientId,
+    name: recipientName,
+    number: transaction.recipientPaymentId || "",
+    initial: recipientName.charAt(0).toUpperCase(),
+    bgColor: colors[colorIndex],
+  };
+};
+
+const loadRecentPeople = async () => {
+  try {
+    setIsLoadingPeople(true);
+    const transactions = await getRecentTransactions();
+    
+    const transformedPeople = transactions.map(transaction => 
+      transformTransactionToContact(transaction)
+    );
+    
+    const uniquePeople = transformedPeople.filter((person, index, self) => 
+      index === self.findIndex(p => p.id === person.id)
+    );
+    
+    setRecentPeople(uniquePeople);
+  } catch (error) {
+    console.error("Failed to load recent people:", error);
+    setRecentPeople([]);
+  } finally {
+    setIsLoadingPeople(false);
+  }
+};
+
+useEffect(() => {
+  if (user?.address) {
+    loadRecentPeople();
+  }
+}, [user?.address]);
 
   return (
     <View style={styles.container}>
@@ -297,11 +349,12 @@ export default function WalletHomePage() {
       </View>
 
       {/* people */}
-      <ProfileIconSection
-        title="People"
-        people={dummyPeople} 
-        initialVisibleCount={7}
-      />
+    <ProfileIconSection
+      title="People"
+      people={isLoadingPeople ? [] : recentPeople} 
+      initialVisibleCount={7}
+      isLoading={isLoadingPeople}
+    />
 
       {/* business and merchant */}
       <ProfileIconSection
