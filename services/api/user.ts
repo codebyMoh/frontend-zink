@@ -98,3 +98,27 @@ export const addUserFullName = async (fullName: string) => {
     throw error;
   }
 };
+
+export const editPaymentId = async (paymentId: string) => {
+  try {
+    const token = await TokenManager.getToken();
+    
+    const response = await fetch(`${ENV.API_BASE_URL_USER}/editPaymentId`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({ paymentId }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to update payment ID');
+    }
+
+    return await response.json();
+  } catch (error) {
+    throw error;
+  }
+};

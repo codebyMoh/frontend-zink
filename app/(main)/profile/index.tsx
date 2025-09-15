@@ -20,6 +20,7 @@ import {
   View,
 } from "react-native";
 import Toast from "react-native-toast-message";
+import * as Clipboard from 'expo-clipboard';
 
 export default function ProfileScreen() {
   const user = useUser()
@@ -44,6 +45,20 @@ useEffect(() => {
     router.dismissAll();
     router.replace("/sign-in");
   }
+
+  const handleCopyUsername = async () => {
+  try {
+    await Clipboard.setStringAsync(userName);
+    Toast.show({
+      type: "success",
+      text1: "Copied!",
+      text2: "Username copied to clipboard",
+    });
+  } catch (error) {
+    console.log("Error copying username:", error);
+  }
+};
+
   return (
     <>
     <ScrollView style={styles.container}>
@@ -58,22 +73,12 @@ useEffect(() => {
         >
           <View style={styles.headerContent}>
             <View>
-              <Text style={styles.name}>{userName}</Text>
-              {/* <TouchableOpacity 
-  onPress={async () => {
-    await Clipboard.setStringAsync(userName);
-    Toast.show({
-      type: 'success',
-      text1: 'Copied!',
-      text2: 'Username copied to clipboard',
-      visibilityTime: 2000,
-      position: 'bottom'
-    });
-  }}
-  style={styles.copyButton}
->
-  <Ionicons name="copy-outline" size={16} color="#000" />
-</TouchableOpacity> */}
+              <View style={styles.nameContainer}>
+                <Text style={styles.name}>{userName}</Text>
+                <TouchableOpacity onPress={handleCopyUsername} style={styles.copyButton}>
+                  <MaterialCommunityIcons name="content-copy" size={18} color="#000" />
+                </TouchableOpacity>
+              </View>
               <Text style={styles.subText}>Email ID: {user?.email}</Text>
             </View>
             <TouchableOpacity
@@ -115,21 +120,21 @@ useEffect(() => {
           <View>
             <Text style={styles.optionText}>Your QR code</Text>
             <Text style={styles.smallText}>
-              Use to receive money from ZINk
+              Use to receive money from ZINK
             </Text>
           </View>
         </TouchableOpacity>
 
-      {/* Your Payment ID */}
-<TouchableOpacity style={styles.option}>
-  <MaterialIcons name="account-balance-wallet" size={24} color="#4CAF50" />
-  <View>
-    <Text style={styles.optionText}>Your Payment ID</Text>
-    <Text style={styles.smallText}>
-      Share your unique payment identifier
-    </Text>
-  </View>
-</TouchableOpacity>
+        {/* Your Payment ID */}
+        {/* <TouchableOpacity style={styles.option}>
+          <MaterialIcons name="account-balance-wallet" size={24} color="#4CAF50" />
+          <View>
+            <Text style={styles.optionText}>Your Payment ID</Text>
+            <Text style={styles.smallText}>
+              Share your unique payment identifier
+            </Text>
+          </View>
+        </TouchableOpacity> */}
 
         {/* Autopay */}
         <TouchableOpacity style={styles.option}>

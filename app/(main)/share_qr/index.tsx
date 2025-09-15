@@ -17,11 +17,18 @@ import {
 import QRCodeSvg from "react-native-qrcode-svg";
 import Toast from "react-native-toast-message";
 import ViewShot from "react-native-view-shot";
+import * as Clipboard from 'expo-clipboard';
+import { Alert, Modal, TextInput } from 'react-native';
+import { editPaymentId } from '@/services/api/user';
 
 export default function ShareQRCodeScreen() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [userId, setUserId] = useState(null);
-  const [userName, setUserName] = useState(null);
+  const [userName, setUserName] = useState<string>("");
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editableUsername, setEditableUsername] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [isPaymentIdEdited, setIsPaymentIdEdited] = useState(false);
   const viewShotRef = useRef<string | any>(null);
 
   const handleDownloadQR = async () => {
@@ -53,13 +60,76 @@ export default function ShareQRCodeScreen() {
     }
   };
 
-  const getUserData = async () => {
+
+  const handleCopyUsername = async () => {
+  try {
+    await Clipboard.setStringAsync(userName);
+    Toast.show({
+      type: "success",
+      text1: "Copied!",
+      text2: "Username copied to clipboard",
+    });
+  } catch (error) {
+    console.log("Error copying username:", error);
+  }
+};
+
+const handleEditUsername = async () => {
+  if (isPaymentIdEdited) {
+    Toast.show({
+      type: "error",
+      text1: "Error", 
+      text2: "You can only edit paymentId once.",
+    });
+    return;
+  }
+  
+  const usernameWithoutZink = userName?.replace('.zink', '') || '';
+  setEditableUsername(usernameWithoutZink);
+  setShowEditModal(true);
+};
+
+const handleSaveUsername = async () => {
+  try {
+    setIsEditing(true);
+    const response = await editPaymentId(editableUsername);
+    
+    setUserName(`${editableUsername}.zink`);
+    setIsPaymentIdEdited(true); 
+    
     const userData = await TokenManager.getUserData();
-    if (userData?._id) {
-      setUserId(userData?._id || null);
-      setUserName(userData?.paymentId || null);
+    if (userData) {
+      userData.paymentId = `${editableUsername}.zink`;
+      userData.isPaymentIdEdited = true;
+      await TokenManager.saveUserData(userData);
     }
-  };
+    
+    setShowEditModal(false);
+    Toast.show({
+      type: "success",
+      text1: "Success",
+      text2: "Username updated successfully",
+    });
+  } catch (error) {
+    Toast.show({
+      type: "error",
+      text1: "Error",
+      text2: error instanceof Error ? error.message : 'Something went wrong',
+    });
+  } finally {
+    setIsEditing(false);
+  }
+};
+
+
+  const getUserData = async () => {
+  const userData = await TokenManager.getUserData();
+  if (userData?._id) {
+    setUserId(userData?._id || null);
+    setUserName(userData?.paymentId || null);
+    setIsPaymentIdEdited(userData?.isPaymentIdEdited || false); 
+  }
+};
 
   useEffect(() => {
     getUserData();
@@ -88,7 +158,17 @@ export default function ShareQRCodeScreen() {
       </TouchableOpacity>
       <ViewShot ref={viewShotRef} options={{ format: "png", quality: 1 }}>
         <View style={styles.card}>
+          <View style={styles.usernameContainer}>
           <Text style={styles.userName}>{userName}</Text>
+          <View style={styles.usernameActions}>
+            <TouchableOpacity onPress={handleCopyUsername} style={styles.actionButton}>
+              <MaterialCommunityIcons name="content-copy" size={20} color="#666" />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleEditUsername} style={styles.actionButton}>
+              <MaterialCommunityIcons name="pencil" size={20} color="#666" />
+            </TouchableOpacity>
+          </View>
+        </View>
           <View style={styles.qrContainer}>
             {userId && (
               <QRCodeSvg
@@ -120,6 +200,53 @@ export default function ShareQRCodeScreen() {
           <Text style={styles.shareButtonText}>Share QR code</Text>
         </TouchableOpacity>
       </View>
+
+            {/* Edit Username Modal */}
+          <Modal
+            visible={showEditModal}
+            transparent={true}
+            animationType="slide"
+            onRequestClose={() => setShowEditModal(false)}
+          >
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>Edit Username</Text>
+                <View style={styles.inputContainer}>
+                  <TextInput
+                    style={styles.textInput}
+                    value={editableUsername}
+                    onChangeText={setEditableUsername}
+                    placeholder="Enter username"
+                    maxLength={20}
+                  />
+                  <Text style={styles.zinkSuffix}>.zink</Text>
+                </View>
+                <Text style={styles.modalNote}>
+                  Username can only be edited once and must be 6-20 characters.
+                </Text>
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity
+                    style={styles.cancelButton}
+                    onPress={() => setShowEditModal(false)}
+                  >
+                    <Text style={styles.cancelButtonText}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.saveButton}
+                    onPress={handleSaveUsername}
+                    disabled={isEditing || editableUsername.length < 6}
+                  >
+                    {isEditing ? (
+                      <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                      <Text style={styles.saveButtonText}>Save</Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Modal>
+        <Toast />
     </SafeAreaView>
   );
 }
@@ -153,7 +280,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     color: "#000",
-    marginBottom: 20,
   },
   qrContainer: {
     backgroundColor: "white",
@@ -209,5 +335,95 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     color: "#000",
+  },
+
+  usernameContainer: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginBottom: 20,
+  width: '100%',
+  },
+  usernameActions: {
+    flexDirection: 'row',
+    marginLeft: 10,
+  },
+  actionButton: {
+    padding: 5,
+    marginLeft: 5,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 20,
+    width: '90%',
+    maxWidth: 400,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    marginBottom: 10,
+  },
+  textInput: {
+    flex: 1,
+    paddingVertical: 15,
+    fontSize: 16,
+  },
+  zinkSuffix: {
+    fontSize: 16,
+    color: '#666',
+    paddingLeft: 5,
+  },
+  modalNote: {
+    fontSize: 12,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  cancelButton: {
+    flex: 1,
+    paddingVertical: 15,
+    marginRight: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    alignItems: 'center',
+  },
+  saveButton: {
+    flex: 1,
+    paddingVertical: 15,
+    marginLeft: 10,
+    borderRadius: 10,
+    backgroundColor: '#5abb5eff',
+    alignItems: 'center',
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    color: '#666',
+  },
+  saveButtonText: {
+    fontSize: 16,
+    color: 'white',
+    fontWeight: '600',
   },
 });
