@@ -67,10 +67,10 @@ export default function ShareQRCodeScreen() {
     Toast.show({
       type: "success",
       text1: "Copied!",
-      text2: "Username copied to clipboard",
+      text2: "Payment ID copied to clipboard",
     });
   } catch (error) {
-    console.log("Error copying username:", error);
+    console.log("Error copying paymentId:", error);
   }
 };
 
@@ -210,7 +210,7 @@ const handleSaveUsername = async () => {
           >
             <View style={styles.modalOverlay}>
               <View style={styles.modalContent}>
-                <Text style={styles.modalTitle}>Edit Username</Text>
+                <Text style={styles.modalTitle}>Edit Payment ID</Text>
                 <View style={styles.inputContainer}>
                   <TextInput
                     style={styles.textInput}
@@ -222,7 +222,7 @@ const handleSaveUsername = async () => {
                   <Text style={styles.zinkSuffix}>.zink</Text>
                 </View>
                 <Text style={styles.modalNote}>
-                  Username can only be edited once and must be 6-20 characters.
+                  Payment ID can only be edited once and must be 6-20 characters.
                 </Text>
                 <View style={styles.modalButtons}>
                   <TouchableOpacity
