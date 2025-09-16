@@ -1,12 +1,17 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useState } from "react";
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 export interface ContactItem {
   id: string;
   name: string;
-  number: string;
   initial: string;
   bgColor: string;
 }
@@ -14,6 +19,7 @@ export interface ContactItem {
 interface PeopleListWithToggleProps {
   title: string;
   people: ContactItem[];
+  userId?: string;
   initialVisibleCount?: number;
   isLoading?: boolean;
 }
@@ -29,18 +35,19 @@ const ProfileIconSection: React.FC<PeopleListWithToggleProps> = ({
   const visiblePeople = showAll ? people : people.slice(0, initialVisibleCount);
   const hasMore = people.length > initialVisibleCount;
 
-  const renderPersonItem = (person: ContactItem) => (
+  const renderPersonItem = (person: ContactItem, index: number) => (
     <TouchableOpacity
-      key={person.id}
+      key={index + 1}
       style={styles.personItem}
-      onPress={() => router.push({
-        pathname: "/payment_chat",
-        params: {
-          recipientId: person.id,
-          recipientName: person.name,
-          recipientUsername: person.number,
-        }
-      })}
+      onPress={() =>
+        router.push({
+          pathname: "/payment_chat",
+          params: {
+            recipientId: person.id,
+            recipientName: person.name,
+          },
+        })
+      }
     >
       <View style={[styles.personAvatar, { backgroundColor: person.bgColor }]}>
         <Text style={styles.personAvatarText}>{person.initial}</Text>
@@ -53,51 +60,55 @@ const ProfileIconSection: React.FC<PeopleListWithToggleProps> = ({
     <View style={styles.container}>
       <Text style={styles.sectionHeader}>{title}</Text>
       <View style={styles.peopleGrid}>
-  {isLoading ? (
-    <View style={styles.loadingContainer}>
-      <ActivityIndicator size="small" color="#5abb5eff" />
-      <Text style={styles.loadingText}>Loading recent contacts...</Text>
-    </View>
-  ) : people.length === 0 ? (
-    <View style={styles.emptyContainer}>
-      <Text style={styles.emptyText}>No recent transactions</Text>
-    </View>
-  ) : (
-    <>
-      {visiblePeople.map(renderPersonItem)}
-      {hasMore && !showAll && (
-        <TouchableOpacity
-          style={styles.personItem}
-          onPress={() => setShowAll(true)}
-        >
-          <View style={[styles.personAvatar, styles.moreButtonBackground]}>
-            <MaterialCommunityIcons
-              name="chevron-down"
-              size={30}
-              color="#000"
-            />
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="small" color="#5abb5eff" />
+            <Text style={styles.loadingText}>Loading recent contacts...</Text>
           </View>
-          <Text style={styles.personName}>More</Text>
-        </TouchableOpacity>
-      )}
-      {hasMore && showAll && (
-        <TouchableOpacity
-          style={styles.personItem}
-          onPress={() => setShowAll(false)}
-        >
-          <View style={[styles.personAvatar, styles.moreButtonBackground]}>
-            <MaterialCommunityIcons
-              name="chevron-up"
-              size={30}
-              color="#000"
-            />
+        ) : people.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No recent transactions</Text>
           </View>
-          <Text style={styles.personName}>Less</Text>
-        </TouchableOpacity>
-      )}
-    </>
-  )}
-</View>
+        ) : (
+          <>
+            {visiblePeople.map(renderPersonItem)}
+            {hasMore && !showAll && (
+              <TouchableOpacity
+                style={styles.personItem}
+                onPress={() => setShowAll(true)}
+              >
+                <View
+                  style={[styles.personAvatar, styles.moreButtonBackground]}
+                >
+                  <MaterialCommunityIcons
+                    name="chevron-down"
+                    size={30}
+                    color="#000"
+                  />
+                </View>
+                <Text style={styles.personName}>More</Text>
+              </TouchableOpacity>
+            )}
+            {hasMore && showAll && (
+              <TouchableOpacity
+                style={styles.personItem}
+                onPress={() => setShowAll(false)}
+              >
+                <View
+                  style={[styles.personAvatar, styles.moreButtonBackground]}
+                >
+                  <MaterialCommunityIcons
+                    name="chevron-up"
+                    size={30}
+                    color="#000"
+                  />
+                </View>
+                <Text style={styles.personName}>Less</Text>
+              </TouchableOpacity>
+            )}
+          </>
+        )}
+      </View>
     </View>
   );
 };
@@ -150,24 +161,24 @@ const styles = StyleSheet.create({
     backgroundColor: "#f0f0f0",
   },
   loadingContainer: {
-  width: "100%",
-  alignItems: "center",
-  padding: 20,
-},
-loadingText: {
-  marginTop: 8,
-  fontSize: 14,
-  color: "#666",
-},
-emptyContainer: {
-  width: "100%",
-  alignItems: "center",
-  padding: 20,
-},
-emptyText: {
-  fontSize: 16,
-  color: "#666",
-},
+    width: "100%",
+    alignItems: "center",
+    padding: 20,
+  },
+  loadingText: {
+    marginTop: 8,
+    fontSize: 14,
+    color: "#666",
+  },
+  emptyContainer: {
+    width: "100%",
+    alignItems: "center",
+    padding: 20,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: "#666",
+  },
 });
 
 export default ProfileIconSection;

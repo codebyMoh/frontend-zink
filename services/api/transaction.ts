@@ -18,11 +18,20 @@ export interface ApiTransaction {
   userName?: string;
   __v: number;
 }
+export interface recipientuser {
+  _id: string;
+  email: string;
+  paymentId: string;
+  userName: string;
+  walletAddressEVM: string;
+  smartWalletAddress: string;
+}
 
 export interface TransactionResponse {
   success: boolean;
   message: string;
-  transactions: ApiTransaction[];
+  transactions?: ApiTransaction[];
+  recipientuser?: recipientuser;
 }
 
 export const storeTransaction = async (transactionData: {
@@ -122,12 +131,16 @@ export const getReceivedTransactions = async (
   }
 };
 
-export const searchTransactionsByUsername = async (search: string): Promise<ApiTransaction[]> => {
+export const searchTransactionsByUsername = async (
+  search: string
+): Promise<ApiTransaction[]> => {
   try {
     const token = await TokenManager.getToken();
 
     const response = await fetch(
-      `${ENV.API_BASE_URL_TRANSACTION}/searchTransactionByUsername/${encodeURIComponent(search)}`,
+      `${
+        ENV.API_BASE_URL_TRANSACTION
+      }/searchTransactionByUsername/${encodeURIComponent(search)}`,
       {
         method: "GET",
         headers: {
@@ -168,7 +181,9 @@ export const getRecentTransactions = async (): Promise<ApiTransaction[]> => {
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.message || "Failed to fetch recent transactions");
+      throw new Error(
+        errorData.message || "Failed to fetch recent transactions"
+      );
     }
 
     const data = await response.json();
@@ -183,7 +198,7 @@ export const getTransactionsForTwoUsers = async (
   page: number = 1,
   limit: number = 20,
   recipientId: string
-): Promise<ApiTransaction[]> => {
+): Promise<TransactionResponse> => {
   try {
     const token = await TokenManager.getToken();
 
@@ -200,11 +215,13 @@ export const getTransactionsForTwoUsers = async (
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.message || "Failed to fetch transactions for two users");
+      throw new Error(
+        errorData.message || "Failed to fetch transactions for two users"
+      );
     }
 
     const data = await response.json();
-    return data.data.transactions || [];
+    return data?.data;
   } catch (error) {
     console.error("Get transactions for two users API error:", error);
     throw error;

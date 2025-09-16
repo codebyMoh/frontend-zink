@@ -16,118 +16,122 @@ import MoreOptions from "./Bottom";
 import OffersAndRewards from "./OffersAndRewards";
 import ProfileIconSection, { ContactItem } from "./ProfileIconSection";
 import { TokenManager } from "@/services/tokenManager";
-import { getRecentTransactions, ApiTransaction } from "@/services/api/transaction";
+import {
+  getRecentTransactions,
+  ApiTransaction,
+} from "@/services/api/transaction";
 
 interface BalanceState {
   usdc: string;
   isLoading: boolean;
+}
+interface userData {
+  _id: string;
+  email: string;
+  paymentId: string;
+  userName?: string;
+  walletAddressEVM?: string;
+  smartWalletAddress?: string;
+  userIdAlchemy?: string;
+  orgIdAlchemy?: string;
+  referralId?: string;
+  active: boolean;
+  lastLogin?: Date;
+  isPaymentIdEdited?: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 const dummyPeople = [
   {
     id: "1",
     name: "Alice",
-    number: "+1234567890",
     initial: "A",
     bgColor: "#da7b66ff",
   },
   {
     id: "2",
     name: "Bob",
-    number: "+1987654321",
     initial: "B",
     bgColor: "#a963e6ff",
   },
   {
     id: "3",
     name: "Charlie",
-    number: "+1122334455",
     initial: "C",
     bgColor: "#6a82eeff",
   },
   {
     id: "4",
     name: "David",
-    number: "+1554433221",
     initial: "D",
     bgColor: "#e672b0ff",
   },
   {
     id: "5",
     name: "Eve",
-    number: "+1667788990",
     initial: "E",
     bgColor: "#b571f1ff",
   },
   {
     id: "6",
     name: "Frank",
-    number: "+1098765432",
     initial: "F",
     bgColor: "#647ff7ff",
   },
   {
     id: "7",
     name: "Grace",
-    number: "+1231231230",
     initial: "G",
     bgColor: "#56a5ebff",
   },
   {
     id: "8",
     name: "Heidi",
-    number: "+1456456456",
     initial: "H",
     bgColor: "#f79951ff",
   },
   {
     id: "9",
     name: "Ivan",
-    number: "+1789789789",
     initial: "I",
     bgColor: "#a164f1ff",
   },
   {
     id: "10",
     name: "Judy",
-    number: "+1010101010",
     initial: "J",
     bgColor: "#57a2e4ff",
   },
   {
     id: "11",
     name: "Kevin",
-    number: "+1212121212",
     initial: "K",
     bgColor: "#a7e75eff",
   },
   {
     id: "12",
     name: "Liam",
-    number: "+1343434343",
     initial: "L",
     bgColor: "#e66e84ff",
   },
   {
     id: "13",
     name: "Liam",
-    number: "+1343434343",
     initial: "L",
     bgColor: "#56a5ebff",
   },
   {
     id: "14",
     name: "Liam",
-    number: "+1343434343",
     initial: "L",
     bgColor: "#da7b66ff",
   },
 ];
 
-
 export default function WalletHomePage() {
   const [recentPeople, setRecentPeople] = useState<ContactItem[]>([]);
-const [isLoadingPeople, setIsLoadingPeople] = useState(true);
+  const [isLoadingPeople, setIsLoadingPeople] = useState(true);
   const [balances, setBalances] = useState<BalanceState>({
     usdc: "0",
     isLoading: true,
@@ -140,13 +144,13 @@ const [isLoadingPeople, setIsLoadingPeople] = useState(true);
 
   const account = client?.account;
 
-  const [userName, setUserName] = useState("User"); // fallback name
+  const [userData, setUserData] = useState<userData>(); // fallback name
 
   useEffect(() => {
     const loadUserData = async () => {
       const userData = await TokenManager.getUserData();
-      if (userData?.userName) {
-        setUserName(userData.userName);
+      if (userData?._id) {
+        setUserData(userData);
       }
     };
     loadUserData();
@@ -201,53 +205,69 @@ const [isLoadingPeople, setIsLoadingPeople] = useState(true);
 
   const displayBalance = formatBalanceForDisplay(balances.usdc);
 
-  const transformTransactionToContact = (transaction: ApiTransaction): ContactItem => {
-  const recipientName = transaction.recipientUserName || "Unknown User";
-  
-  const colors = [
-    "#da7b66ff", "#a963e6ff", "#6a82eeff", "#e672b0ff", 
-    "#b571f1ff", "#647ff7ff", "#56a5ebff", "#f79951ff",
-    "#a164f1ff", "#57a2e4ff", "#a7e75eff", "#e66e84ff"
-  ];
-  
-  const colorIndex = recipientName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colors.length;
-  
-  return {
-    id: transaction.recipientId,
-    name: recipientName,
-    number: transaction.recipientPaymentId || "",
-    initial: recipientName.charAt(0).toUpperCase(),
-    bgColor: colors[colorIndex],
+  const transformTransactionToContact = (
+    transaction: ApiTransaction
+  ): ContactItem => {
+    const actualUserToShow =
+      transaction?.userId?.toString() == userData?._id?.toString()
+        ? true
+        : false;
+    const recipientName =
+      (actualUserToShow
+        ? transaction.recipientUserName
+        : transaction.userName) || "Unknown user";
+
+    const colors = [
+      "#da7b66ff",
+      "#a963e6ff",
+      "#6a82eeff",
+      "#e672b0ff",
+      "#b571f1ff",
+      "#647ff7ff",
+      "#56a5ebff",
+      "#f79951ff",
+      "#a164f1ff",
+      "#57a2e4ff",
+      "#a7e75eff",
+      "#e66e84ff",
+    ];
+
+    const colorIndex =
+      recipientName
+        .split("")
+        .reduce((acc, char) => acc + char.charCodeAt(0), 0) % colors.length;
+
+    return {
+      id: actualUserToShow ? transaction?.recipientId : transaction.userId,
+      name: recipientName,
+      initial: recipientName.charAt(0).toUpperCase(),
+      bgColor: colors[colorIndex],
+    };
   };
-};
 
-const loadRecentPeople = async () => {
-  try {
-    setIsLoadingPeople(true);
-    const transactions = await getRecentTransactions();
-    
-    const transformedPeople = transactions.map(transaction => 
-      transformTransactionToContact(transaction)
-    );
-    
-    const uniquePeople = transformedPeople.filter((person, index, self) => 
-      index === self.findIndex(p => p.id === person.id)
-    );
-    
-    setRecentPeople(uniquePeople);
-  } catch (error) {
-    console.error("Failed to load recent people:", error);
-    setRecentPeople([]);
-  } finally {
-    setIsLoadingPeople(false);
-  }
-};
+  const loadRecentPeople = async () => {
+    try {
+      setIsLoadingPeople(true);
+      const transactions = await getRecentTransactions();
 
-useEffect(() => {
-  if (user?.address) {
-    loadRecentPeople();
-  }
-}, [user?.address]);
+      const transformedPeople = transactions.map((transaction) =>
+        transformTransactionToContact(transaction)
+      );
+
+      setRecentPeople(transformedPeople);
+    } catch (error) {
+      console.error("Failed to load recent people:", error);
+      setRecentPeople([]);
+    } finally {
+      setIsLoadingPeople(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user?.address && userData?._id) {
+      loadRecentPeople();
+    }
+  }, [user?.address, userData?._id]);
 
   return (
     <View style={styles.container}>
@@ -266,7 +286,7 @@ useEffect(() => {
           onPress={() => router.push("/profile")}
         >
           <Text style={styles.profileText}>
-            {userName?.charAt(0)?.toUpperCase()}
+            {userData?.userName?.charAt(0)?.toUpperCase()}
           </Text>
         </TouchableOpacity>
       </View>
@@ -349,15 +369,17 @@ useEffect(() => {
       </View>
 
       {/* people */}
-    <ProfileIconSection
-      title="People"
-      people={isLoadingPeople ? [] : recentPeople} 
-      initialVisibleCount={7}
-      isLoading={isLoadingPeople}
-    />
+      <ProfileIconSection
+        title="People"
+        people={isLoadingPeople ? [] : recentPeople}
+        userId={userData?._id}
+        initialVisibleCount={7}
+        isLoading={isLoadingPeople}
+      />
 
       {/* business and merchant */}
       <ProfileIconSection
+        userId={userData?._id}
         title="Businesses"
         people={dummyPeople}
         initialVisibleCount={7}
