@@ -1,4 +1,3 @@
-import { useSmartAccountClient, useUser } from "@account-kit/react-native";
 import { AntDesign } from "@expo/vector-icons";
 import { Stack, router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
@@ -18,9 +17,8 @@ export default function PaymentScreen() {
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const params = useLocalSearchParams();
-  const recipientAddress = params.recipientAddress as string || "0xF62177704d06a8C9d97622f44fbC9EBC6a667ACA";
-  const recipient = (params.recipientName as string) || (params.recipientUsername as string) || "Unknown User";
-
+  const recipientAddress = params.recipientAddress as string;
+  const recipient = params.recipientName as string;
 
   async function payHandler() {
     try {
@@ -28,7 +26,7 @@ export default function PaymentScreen() {
       setErrorMessage("");
 
       const numericAmount = parseFloat(amount);
-      
+
       if (!amount || numericAmount <= 0) {
         setErrorMessage("Please enter a valid amount.");
         setIsLoading(false);
@@ -46,12 +44,12 @@ export default function PaymentScreen() {
         params: {
           amount: amount,
           message: message,
-          recipient: params.recipientName || params.recipientUsername,
+          recipient: params.recipientName,
           recipientAddress: params.recipientAddress,
-          recipientId: params.recipientId 
-        }
+          recipientId: params.recipientId,
+        },
       });
-      
+
       setIsLoading(false);
     } catch (error) {
       console.log("🚀 ~ payHandler ~ error:", error);
@@ -63,9 +61,12 @@ export default function PaymentScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
-      
+
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
           <AntDesign name="arrowleft" size={28} color="black" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Send Payment</Text>
@@ -76,7 +77,9 @@ export default function PaymentScreen() {
         {/* Avatar + Name */}
         <View style={styles.userInfo}>
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{recipient?.charAt(0)?.toUpperCase()}</Text>
+            <Text style={styles.avatarText}>
+              {recipient?.charAt(0)?.toUpperCase()}
+            </Text>
           </View>
           <Text style={styles.name}>{recipient}</Text>
           <Text style={styles.address}>{recipientAddress}</Text>
@@ -130,10 +133,12 @@ export default function PaymentScreen() {
         <TouchableOpacity
           style={[
             styles.payButton,
-            { 
-              opacity: (isLoading || !amount || parseFloat(amount) <= 0) ? 0.5 : 1,
-              backgroundColor: (amount && parseFloat(amount) > 0) ? "#34C759" : "#ccc"
-            }
+            {
+              opacity:
+                isLoading || !amount || parseFloat(amount) <= 0 ? 0.5 : 1,
+              backgroundColor:
+                amount && parseFloat(amount) > 0 ? "#34C759" : "#ccc",
+            },
           ]}
           onPress={payHandler}
           disabled={isLoading || !amount || parseFloat(amount) <= 0}

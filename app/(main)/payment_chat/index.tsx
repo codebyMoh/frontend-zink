@@ -1,4 +1,8 @@
-import { ApiTransaction, getTransactionsForTwoUsers } from "@/services/api/transaction";
+import {
+  ApiTransaction,
+  getTransactionsForTwoUsers,
+  recipientuser,
+} from "@/services/api/transaction";
 import { TokenManager } from "@/services/tokenManager";
 import { AntDesign } from "@expo/vector-icons";
 import { Stack, router, useLocalSearchParams } from "expo-router";
@@ -15,11 +19,11 @@ import {
 
 export default function PaymentChatScreen() {
   const params = useLocalSearchParams();
-  const recipientName = params.recipientName as string || "Lacey Turner";
-  const recipientUsername = params.recipientUsername as string || "";
-  const recipientId = params.recipientId as string || "";
+  const recipientName = (params.recipientName as string) || "Lacey Turner";
+  const recipientId = (params.recipientId as string) || "";
 
   const [transactions, setTransactions] = useState<ApiTransaction[]>([]);
+  const [recipientuser, setRecipientuser] = useState<recipientuser>();
   const [isLoading, setIsLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<any>(null);
 
@@ -44,8 +48,13 @@ export default function PaymentChatScreen() {
   const loadTransactions = async () => {
     try {
       setIsLoading(true);
-      const apiTransactions = await getTransactionsForTwoUsers(1, 20, recipientId);
-      setTransactions(apiTransactions);
+      const apiTransactions = await getTransactionsForTwoUsers(
+        1,
+        20,
+        recipientId
+      );
+      setTransactions(apiTransactions?.transactions || []);
+      setRecipientuser(apiTransactions?.recipientuser);
     } catch (error) {
       console.error("Failed to load transactions:", error);
       setTransactions([]);
@@ -59,7 +68,14 @@ export default function PaymentChatScreen() {
   };
 
   const generateAvatarColor = (name: string) => {
-    const colors = ["#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FFEAA7", "#DDA0DD"];
+    const colors = [
+      "#FF6B6B",
+      "#4ECDC4",
+      "#45B7D1",
+      "#96CEB4",
+      "#FFEAA7",
+      "#DDA0DD",
+    ];
     const index = name.length % colors.length;
     return colors[index];
   };
@@ -68,10 +84,10 @@ export default function PaymentChatScreen() {
     router.push({
       pathname: "/pay",
       params: {
-        recipientId,
-        recipientName,
-        recipientUsername,
-      }
+        recipientId: recipientuser?._id,
+        recipientName: recipientuser?.userName,
+        recipientAddress: recipientuser?.walletAddressEVM,
+      },
     });
   };
 
@@ -82,78 +98,90 @@ export default function PaymentChatScreen() {
 
   const renderTransaction = (transaction: ApiTransaction) => {
     if (!currentUser) return null;
-    
+
     const isCurrentUserSender = transaction.userId === currentUser._id;
-    const transactionType = isCurrentUserSender ? 'sent' : 'received';
-    
+    const transactionType = isCurrentUserSender ? "sent" : "received";
+
     return (
       <View key={transaction._id}>
         {/* Date separator */}
         <View style={styles.dateSeparator}>
           <View style={styles.dateSeparatorLine} />
           <Text style={styles.dateSeparatorText}>
-            {new Date(transaction.createdAt).toLocaleDateString('en-US', {
-              month: 'short',
-              day: 'numeric'
-            })}, {new Date(transaction.createdAt).toLocaleTimeString('en-US', {
-              hour: 'numeric',
-              minute: '2-digit'
+            {new Date(transaction.createdAt).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+            })}
+            ,{" "}
+            {new Date(transaction.createdAt).toLocaleTimeString("en-US", {
+              hour: "numeric",
+              minute: "2-digit",
             })}
           </Text>
           <View style={styles.dateSeparatorLine} />
         </View>
 
         {/* Transaction card */}
-        <View style={[
-          styles.transactionCard, 
-          transactionType === 'sent' ? styles.sentCard : styles.receivedCard
-        ]}>
-          <Text style={[
-            styles.transactionTitle,
-            transactionType === 'sent' && styles.sentText
-          ]}>
-            {transactionType === 'sent' 
-              ? `Payment to ${recipientName}` 
-              : 'Payment to you'}
+        <View
+          style={[
+            styles.transactionCard,
+            transactionType === "sent" ? styles.sentCard : styles.receivedCard,
+          ]}
+        >
+          <Text
+            style={[
+              styles.transactionTitle,
+              transactionType === "sent" && styles.sentText,
+            ]}
+          >
+            {transactionType === "sent"
+              ? `Payment to ${recipientName}`
+              : "Payment to you"}
           </Text>
-          
+
           {transaction.message && (
-            <Text style={[
-              styles.transactionDescription,
-              transactionType === 'sent' && styles.sentText
-            ]}>
+            <Text
+              style={[
+                styles.transactionDescription,
+                transactionType === "sent" && styles.sentText,
+              ]}
+            >
               {transaction.message}
             </Text>
           )}
 
-          <Text style={[
-            styles.transactionAmount,
-            transactionType === 'sent' && styles.sentText
-          ]}>
-            {transaction.amount.toLocaleString('en-IN')} {transaction.currency}
+          <Text
+            style={[
+              styles.transactionAmount,
+              transactionType === "sent" && styles.sentText,
+            ]}
+          >
+            {transaction.amount.toLocaleString("en-IN")} {transaction.currency}
           </Text>
 
           <View style={styles.transactionStatus}>
-            <View style={[
-              styles.statusIndicator, 
-              { backgroundColor: '#4CAF50' }
-            ]} />
-            <Text style={[
-              styles.statusText,
-              { 
-                color: '#4CAF50'
-              }
-            ]}>
-              Paid • {new Date(transaction.createdAt).toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric'
+            <View
+              style={[styles.statusIndicator, { backgroundColor: "#4CAF50" }]}
+            />
+            <Text
+              style={[
+                styles.statusText,
+                {
+                  color: "#4CAF50",
+                },
+              ]}
+            >
+              Paid •{" "}
+              {new Date(transaction.createdAt).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
               })}
             </Text>
-            <AntDesign 
-              name="right" 
-              size={16} 
-              color={transactionType === 'sent' ? '#E6F2FF' : '#999'} 
-              style={styles.statusArrow} 
+            <AntDesign
+              name="right"
+              size={16}
+              color={transactionType === "sent" ? "#E6F2FF" : "#999"}
+              style={styles.statusArrow}
             />
           </View>
         </View>
@@ -173,7 +201,7 @@ export default function PaymentChatScreen() {
         >
           <AntDesign name="arrowleft" size={24} color="#000" />
         </TouchableOpacity>
-        
+
         <View style={styles.headerCenter}>
           <View
             style={[
@@ -181,15 +209,10 @@ export default function PaymentChatScreen() {
               { backgroundColor: generateAvatarColor(recipientName) },
             ]}
           >
-            <Text style={styles.avatarText}>
-              {getInitial(recipientName)}
-            </Text>
+            <Text style={styles.avatarText}>{getInitial(recipientName)}</Text>
           </View>
           <View style={styles.headerInfo}>
             <Text style={styles.headerName}>{recipientName}</Text>
-            {recipientUsername && (
-              <Text style={styles.headerUsername}>@{recipientUsername}</Text>
-            )}
           </View>
         </View>
 
@@ -197,7 +220,10 @@ export default function PaymentChatScreen() {
       </View>
 
       {/* Transaction History */}
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.transactionContainer}>
           {isLoading ? (
             <View style={styles.loadingContainer}>
@@ -208,7 +234,7 @@ export default function PaymentChatScreen() {
               <Text style={styles.emptyText}>No transactions yet</Text>
             </View>
           ) : (
-             transactions.map(renderTransaction)
+            transactions.map(renderTransaction)
           )}
         </View>
       </ScrollView>
@@ -226,51 +252,51 @@ export default function PaymentChatScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: "#F5F5F5",
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 16,
     paddingVertical: 12,
-    paddingTop: Platform.OS === 'android' ? 12 : 50,
-    backgroundColor: '#FFF',
+    paddingTop: Platform.OS === "android" ? 12 : 50,
+    backgroundColor: "#FFF",
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: "#E0E0E0",
   },
   backButton: {
     padding: 8,
   },
   headerCenter: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginLeft: 12,
   },
   avatar: {
     width: 45,
     height: 45,
     borderRadius: 22.5,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: 12,
   },
   avatarText: {
-    color: '#FFF',
+    color: "#FFF",
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   headerInfo: {
     flex: 1,
   },
   headerName: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#000',
+    fontWeight: "600",
+    color: "#000",
   },
   headerUsername: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
     marginTop: 2,
   },
   headerSpacer: {
@@ -286,42 +312,42 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     padding: 20,
-    alignItems: 'center',
+    alignItems: "center",
   },
   loadingText: {
     fontSize: 16,
-    color: '#666',
+    color: "#666",
   },
   emptyContainer: {
     padding: 20,
-    alignItems: 'center',
+    alignItems: "center",
   },
   emptyText: {
     fontSize: 16,
-    color: '#666',
+    color: "#666",
   },
   dateSeparator: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  marginVertical: 20,
-},
-dateSeparatorText: {
-  fontSize: 12,
-  color: '#999',
-  backgroundColor: '#F5F5F5',
-  paddingHorizontal: 12,
-},
-dateSeparatorLine: {
-  flex: 1,
-  height: 1,
-  backgroundColor: '#E0E0E0',
-},
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 20,
+  },
+  dateSeparatorText: {
+    fontSize: 12,
+    color: "#999",
+    backgroundColor: "#F5F5F5",
+    paddingHorizontal: 12,
+  },
+  dateSeparatorLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "#E0E0E0",
+  },
   transactionCard: {
-    backgroundColor: '#FFF',
+    backgroundColor: "#FFF",
     borderRadius: 12,
     padding: 16,
     marginBottom: 20,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 1,
@@ -332,24 +358,24 @@ dateSeparatorLine: {
   },
   transactionTitle: {
     fontSize: 16,
-    fontWeight: '500',
-    color: '#000',
+    fontWeight: "500",
+    color: "#000",
     marginBottom: 4,
   },
   transactionDescription: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
     marginBottom: 8,
   },
   transactionAmount: {
     fontSize: 28,
-    fontWeight: 'bold',
-    color: '#000',
+    fontWeight: "bold",
+    color: "#000",
     marginBottom: 12,
   },
   transactionStatus: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   statusIndicator: {
     width: 8,
@@ -359,51 +385,51 @@ dateSeparatorLine: {
   },
   statusText: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: "500",
     flex: 1,
   },
   statusArrow: {
     marginLeft: 8,
   },
   bottomActions: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    flexDirection: 'row',
+    flexDirection: "row",
     paddingHorizontal: 16,
     paddingVertical: 16,
-    paddingBottom: Platform.OS === 'ios' ? 34 : 16,
-    backgroundColor: '#FFF',
+    paddingBottom: Platform.OS === "ios" ? 34 : 16,
+    backgroundColor: "#FFF",
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    borderTopColor: "#E0E0E0",
     gap: 12,
   },
   payButton: {
     flex: 1,
-    backgroundColor: '#34C759',
+    backgroundColor: "#34C759",
     borderRadius: 25,
     paddingVertical: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   payButtonText: {
-    color: '#FFF',
+    color: "#FFF",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   sentCard: {
-    alignSelf: 'flex-end',
-    backgroundColor: '#FFF',
+    alignSelf: "flex-end",
+    backgroundColor: "#FFF",
   },
   receivedCard: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#FFF',
+    alignSelf: "flex-start",
+    backgroundColor: "#FFF",
   },
   sentText: {
-    color: '#000',
+    color: "#000",
   },
   receivedText: {
-    color: '#000',
-  }
+    color: "#000",
+  },
 });
