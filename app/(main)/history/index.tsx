@@ -108,13 +108,7 @@ const TransactionHistoryScreen: React.FC = () => {
       setFilteredTransactions(displayTransactions);
     } catch (error) {
       console.error("Username search error:", error);
-      const filtered = allTransactions.filter(
-        (transaction) =>
-          transaction.name.toLowerCase().includes(searchText.toLowerCase()) ||
-          transaction.txHash.toLowerCase().includes(searchText.toLowerCase()) ||
-          transaction.currency.toLowerCase().includes(searchText.toLowerCase())
-      );
-      setFilteredTransactions(filtered);
+      setFilteredTransactions(allTransactions);
     } finally {
       setLoading(false);
     }
@@ -126,16 +120,8 @@ const TransactionHistoryScreen: React.FC = () => {
   useEffect(() => {
     if (searchText === "") {
       setFilteredTransactions(allTransactions);
-    } else if (searchText.trim().length >= 2) {
+    } else if (searchText.trim().length > 0) {
       debounsPerformSearch(searchText.trim());
-    } else {
-      const filtered = allTransactions.filter(
-        (transaction) =>
-          transaction.name.toLowerCase().includes(searchText.toLowerCase()) ||
-          transaction.txHash.toLowerCase().includes(searchText.toLowerCase()) ||
-          transaction.currency.toLowerCase().includes(searchText.toLowerCase())
-      );
-      setFilteredTransactions(filtered);
     }
   }, [searchText, allTransactions]);
 
@@ -175,20 +161,6 @@ const TransactionHistoryScreen: React.FC = () => {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    if (searchText === "") {
-      setFilteredTransactions(allTransactions);
-    } else {
-      const filtered = allTransactions.filter(
-        (transaction) =>
-          transaction.name.toLowerCase().includes(searchText.toLowerCase()) ||
-          transaction.txHash.toLowerCase().includes(searchText.toLowerCase()) ||
-          transaction.currency.toLowerCase().includes(searchText.toLowerCase())
-      );
-      setFilteredTransactions(filtered);
-    }
-  }, [searchText, allTransactions]);
 
   useEffect(() => {
     setPage(1);
