@@ -132,19 +132,9 @@ const dummyPeople = [
 export default function WalletHomePage() {
   const [recentPeople, setRecentPeople] = useState<ContactItem[]>([]);
   const [isLoadingPeople, setIsLoadingPeople] = useState(true);
-  const [balances, setBalances] = useState<BalanceState>({
-    usdc: "0",
-    isLoading: true,
-  });
+  const [userData, setUserData] = useState<userData>(); // fallback name
 
   const user = useUser();
-  const { client } = useSmartAccountClient({
-    type: "ModularAccountV2",
-  });
-
-  const account = client?.account;
-
-  const [userData, setUserData] = useState<userData>(); // fallback name
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -155,55 +145,6 @@ export default function WalletHomePage() {
     };
     loadUserData();
   }, []);
-
-  // Base mainnet USDC contract address
-  const BASE_USDC = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
-
-  useEffect(() => {
-    if (client && account?.address) {
-      loadBalances();
-    }
-  }, [client, account?.address]);
-
-  const loadBalances = async () => {
-    if (!client || !account?.address || !user?.address) return;
-
-    try {
-      setBalances((prev) => ({ ...prev, isLoading: true }));
-
-      // get USDC balance
-      const smartAccountUsdcBalance = await client.readContract({
-        address: BASE_USDC,
-        abi: parseAbi([
-          "function balanceOf(address owner) view returns (uint256)",
-        ]),
-        functionName: "balanceOf",
-        args: [account.address],
-      });
-
-      const smartUsdcFormatted = (
-        Number(smartAccountUsdcBalance) / 1e6
-      ).toFixed(3);
-      setBalances({
-        usdc: parseFloat(smartUsdcFormatted).toFixed(3),
-        isLoading: false,
-      });
-    } catch (error) {
-      console.error("Failed to load balances:", error);
-      setBalances((prev) => ({ ...prev, isLoading: false }));
-    }
-  };
-
-  // helper function to format the balance for display
-  const formatBalanceForDisplay = (balance: string) => {
-    const [whole, decimal] = balance.split(".");
-    return {
-      whole: whole || "0",
-      decimal: decimal || "00",
-    };
-  };
-
-  const displayBalance = formatBalanceForDisplay(balances.usdc);
 
   const transformTransactionToContact = (
     transaction: ApiTransaction
@@ -295,35 +236,6 @@ export default function WalletHomePage() {
             </Text>
           </TouchableOpacity>
         </View>
-
-        {/* Balance Card with QR and Illustration */}
-        <View style={styles.balanceCard}>
-          <View style={styles.balanceContent}>
-            <View style={styles.balanceDisplay}>
-              <Image
-                source={require("../../../assets/images/token/usdc.png")}
-                style={styles.usdcIcon}
-              />
-              {balances.isLoading ? (
-                <ActivityIndicator color="#2E7D32" size="large" />
-              ) : (
-                <Text style={styles.balanceAmount}>
-                  {displayBalance.whole}
-                  <Text style={styles.balanceDecimal}>
-                    .{displayBalance.decimal}
-                  </Text>
-                </Text>
-              )}
-            </View>
-          </View>
-
-          <TouchableOpacity
-            style={styles.qrButton}
-            onPress={() => router.push("/share_qr")}
-          >
-            <MaterialCommunityIcons name="qrcode-scan" size={24} color="#2E7D32" />
-          </TouchableOpacity>
-        </View>
       </ImageBackground>
 
       {/* Updated action grid layout */}
@@ -408,6 +320,7 @@ const styles = StyleSheet.create({
   },
   topSectionContainer: {
     paddingBottom: 20,
+    height: 250,
   },
   searchHeader: {
     flexDirection: "row",
@@ -443,64 +356,6 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
-  },
-  balanceCard: {
-    marginHorizontal: 20,
-    // backgroundColor: "#E8F5E8",
-    borderRadius: 16,
-    height: 160,
-    flexDirection: "row",
-    alignItems: "center",
-    overflow: "hidden",
-    position: "relative",
-  },
-  balanceContent: {
-    flex: 1,
-    paddingLeft: 24,
-    justifyContent: "center",
-  },
-  balanceDisplay: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  usdcIcon: {
-    width: 24,
-    height: 24,
-    marginRight: 6,
-  },
-  balanceAmount: {
-    fontSize: 42,
-    fontWeight: "bold",
-    color: "#2E7D32",
-  },
-  balanceDecimal: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#2E7D32",
-  },
-  cardIllustration: {
-    position: "absolute",
-    right: 0,
-    bottom: 0,
-    width: "60%",
-    height: "100%",
-    justifyContent: "flex-end",
-    alignItems: "flex-end",
-    paddingRight: 10,
-    paddingBottom: 0,
-  },
-  illustrationImage: {
-    width: 210, 
-    height: 140, 
-    resizeMode: "contain",
-  },
-  qrButton: {
-    position: "absolute",
-    top: 15,
-    right: 15,
-    backgroundColor: "rgba(255,255,255,0.9)",
-    borderRadius: 10,
-    padding: 8,
   },
   actionGrid: {
     flexDirection: "row",
