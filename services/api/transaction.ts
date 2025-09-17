@@ -167,7 +167,6 @@ export const searchTransactionsByUsername = async (
 export const getRecentTransactions = async (): Promise<ApiTransaction[]> => {
   try {
     const token = await TokenManager.getToken();
-
     const response = await fetch(
       `${ENV.API_BASE_URL_TRANSACTION}/getRecentTransaction`,
       {

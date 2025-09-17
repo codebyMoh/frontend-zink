@@ -271,53 +271,59 @@ export default function WalletHomePage() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.searchHeader}>
-        <TouchableOpacity
-          style={styles.searchBar}
-          onPress={() => router.push("/search_people")}
-        >
-          <MaterialCommunityIcons name="magnify" size={24} color="#999" />
-          <Text style={styles.searchPlaceholder}>
-            Pay friends and merchants
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.profileIcon}
-          onPress={() => router.push("/profile")}
-        >
-          <Text style={styles.profileText}>
-            {userData?.userName?.charAt(0)?.toUpperCase()}
-          </Text>
-        </TouchableOpacity>
-      </View>
-
       <ImageBackground
-        source={require("../../../assets/images/home/homeBg.webp")}
-        style={styles.card}
-        imageStyle={styles.cardImageBackground}
+        source={require("../../../assets/images/home/city.png")}
+        style={styles.topSectionContainer}
+        resizeMode="cover"
       >
-        <View style={styles.cardContentAbsolute}>
-          <Image
-            source={require("../../../assets/images/token/usdc.png")}
-            style={styles.usdcIcon}
-          />
-          {balances.isLoading ? (
-            <ActivityIndicator color="white" size="large" />
-          ) : (
-            <Text style={styles.balanceAmount}>
-              {displayBalance.whole}
-              <Text style={styles.balanceDecimal}>
-                .{displayBalance.decimal}
-              </Text>
+        <View style={styles.searchHeader}>
+          <TouchableOpacity
+            style={styles.searchBar}
+            onPress={() => router.push("/search_people")}
+          >
+            <MaterialCommunityIcons name="magnify" size={20} color="#999" />
+            <Text style={styles.searchPlaceholder}>
+              Pay friends and merchants
             </Text>
-          )}
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.profileIcon}
+            onPress={() => router.push("/profile")}
+          >
+            <Text style={styles.profileText}>
+              {userData?.userName?.charAt(0)?.toUpperCase()}
+            </Text>
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity
-          style={styles.cardMenuAbsolute}
-          onPress={() => router.push("/share_qr")}
-        >
-          <MaterialCommunityIcons name="qrcode-scan" size={24} color="white" />
-        </TouchableOpacity>
+
+        {/* Balance Card with QR and Illustration */}
+        <View style={styles.balanceCard}>
+          <View style={styles.balanceContent}>
+            <View style={styles.balanceDisplay}>
+              <Image
+                source={require("../../../assets/images/token/usdc.png")}
+                style={styles.usdcIcon}
+              />
+              {balances.isLoading ? (
+                <ActivityIndicator color="#2E7D32" size="large" />
+              ) : (
+                <Text style={styles.balanceAmount}>
+                  {displayBalance.whole}
+                  <Text style={styles.balanceDecimal}>
+                    .{displayBalance.decimal}
+                  </Text>
+                </Text>
+              )}
+            </View>
+          </View>
+
+          <TouchableOpacity
+            style={styles.qrButton}
+            onPress={() => router.push("/share_qr")}
+          >
+            <MaterialCommunityIcons name="qrcode-scan" size={24} color="#2E7D32" />
+          </TouchableOpacity>
+        </View>
       </ImageBackground>
 
       {/* Updated action grid layout */}
@@ -329,29 +335,30 @@ export default function WalletHomePage() {
           >
             <MaterialCommunityIcons
               name="qrcode-scan"
-              size={32}
-              color="white"
+              size={28}
+              color="#1565C0"
             />
           </TouchableOpacity>
-          <Text style={styles.actionText}>Scan and Pay</Text>
+          <Text style={styles.actionText}>Scan any{"\n"}QR code</Text>
         </View>
-        {/* <View style={styles.actionItemContainer}>
+
+        <View style={styles.actionItemContainer}>
           <TouchableOpacity
             style={styles.actionIconButton}
             onPress={() => router.push("/search_people")}
           >
             <MaterialCommunityIcons
               name="currency-usd"
-              size={32}
-              color="white"
+              size={28}
+              color="#1565C0"
             />
           </TouchableOpacity>
           <Text style={styles.actionText}>Pay{"\n"}anyone</Text>
-        </View> */}
+        </View>
 
         <View style={styles.actionItemContainer}>
           <TouchableOpacity style={styles.actionIconButton}>
-            <MaterialCommunityIcons name="bank" size={32} color="white" />
+            <MaterialCommunityIcons name="bank" size={28} color="#1565C0" />
           </TouchableOpacity>
           <Text style={styles.actionText}>Stake</Text>
         </View>
@@ -360,8 +367,8 @@ export default function WalletHomePage() {
           <TouchableOpacity style={styles.actionIconButton}>
             <MaterialCommunityIcons
               name="gift-outline"
-              size={32}
-              color="white"
+              size={28}
+              color="#1565C0"
             />
           </TouchableOpacity>
           <Text style={styles.actionText}>Earn{"\n"}rewards</Text>
@@ -395,150 +402,130 @@ export default function WalletHomePage() {
 }
 
 const styles = StyleSheet.create({
-  currencyContainer: {
-    flexDirection: "column",
-    alignItems: "center",
-    marginRight: 10,
-  },
-  smallUsdcIcon: {
-    width: 20,
-    height: 20,
-    marginBottom: 2,
-  },
-  currencyLabel: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: "white",
-  },
-  usdcIcon: {
-    width: 24,
-    height: 24,
-    marginRight: 6,
-  },
-  usdcText: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "white",
-    marginRight: 8,
-  },
   container: {
     flex: 1,
     backgroundColor: "#fff",
   },
-  header: {
-    padding: 20,
-    paddingTop: 50,
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-  },
-  card: {
-    marginHorizontal: 20,
-    borderRadius: 16,
-    height: 200,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 8,
-    overflow: "hidden",
-    position: "relative",
-  },
-  cardImageBackground: {
-    resizeMode: "cover",
-    borderRadius: 16,
-  },
-  cardContentAbsolute: {
-    position: "absolute",
-    top: 0,
-    bottom: 0,
-    left: 0,
-    right: 0,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  balanceCurrency: {
-    fontSize: 32,
-    fontWeight: "bold",
-    color: "white",
-    marginRight: 5,
-  },
-  balanceAmount: {
-    fontSize: 48,
-    fontWeight: "bold",
-    color: "white",
-  },
-  balanceDecimal: {
-    fontSize: 32,
-    fontWeight: "bold",
-    color: "white",
-  },
-  cardMenuAbsolute: {
-    backgroundColor: "rgba(255,255,255,0.2)",
-    borderRadius: 10,
-    padding: 8,
-    position: "absolute",
-    top: 15,
-    right: 15,
-  },
-  actionGrid: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    marginTop: 20,
-    marginBottom: 20,
-  },
-  actionItemContainer: {
-    alignItems: "center",
-    width: "23%",
-  },
-  actionIconButton: {
-    backgroundColor: "#5abb5eff",
-    borderRadius: 15,
-    padding: 12,
-    marginBottom: 8,
-  },
-  actionText: {
-    fontSize: 15,
-    fontWeight: "500",
-    color: "#000",
-    textAlign: "center",
+  topSectionContainer: {
+    paddingBottom: 20,
   },
   searchHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     padding: 20,
+    paddingBottom: 15,
   },
   searchBar: {
     flexDirection: "row",
     alignItems: "center",
     flex: 1,
-    backgroundColor: "#f0f0f0",
-    borderRadius: 50,
+    backgroundColor: "#f5f5f5",
+    borderRadius: 25,
     paddingHorizontal: 15,
-    paddingVertical: 12,
+    paddingVertical: 10,
     marginRight: 10,
   },
   searchPlaceholder: {
-    color: "#555",
-    marginLeft: 10,
-    fontSize: 16,
+    color: "#666",
+    marginLeft: 8,
+    fontSize: 15,
   },
   profileIcon: {
     backgroundColor: "#444",
-    width: 45,
-    height: 45,
-    borderRadius: 25,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: "center",
     alignItems: "center",
   },
   profileText: {
     color: "#fff",
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: "bold",
+  },
+  balanceCard: {
+    marginHorizontal: 20,
+    // backgroundColor: "#E8F5E8",
+    borderRadius: 16,
+    height: 160,
+    flexDirection: "row",
+    alignItems: "center",
+    overflow: "hidden",
+    position: "relative",
+  },
+  balanceContent: {
+    flex: 1,
+    paddingLeft: 24,
+    justifyContent: "center",
+  },
+  balanceDisplay: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  usdcIcon: {
+    width: 24,
+    height: 24,
+    marginRight: 6,
+  },
+  balanceAmount: {
+    fontSize: 42,
+    fontWeight: "bold",
+    color: "#2E7D32",
+  },
+  balanceDecimal: {
+    fontSize: 28,
+    fontWeight: "bold",
+    color: "#2E7D32",
+  },
+  cardIllustration: {
+    position: "absolute",
+    right: 0,
+    bottom: 0,
+    width: "60%",
+    height: "100%",
+    justifyContent: "flex-end",
+    alignItems: "flex-end",
+    paddingRight: 10,
+    paddingBottom: 0,
+  },
+  illustrationImage: {
+    width: 210, 
+    height: 140, 
+    resizeMode: "contain",
+  },
+  qrButton: {
+    position: "absolute",
+    top: 15,
+    right: 15,
+    backgroundColor: "rgba(255,255,255,0.9)",
+    borderRadius: 10,
+    padding: 8,
+  },
+  actionGrid: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginTop: 20,
+    marginBottom: 20,
+    paddingHorizontal: 10,
+  },
+  actionItemContainer: {
+    alignItems: "center",
+    width: "23%",
+  },
+  actionIconButton: {
+    backgroundColor: "rgba(13, 71, 247, 0.2)",
+    borderRadius: 15,
+    padding: 15,
+    marginBottom: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  actionText: {
+    fontSize: 13,
+    fontWeight: "500",
+    color: "#333",
+    textAlign: "center",
+    lineHeight: 16,
   },
 });
