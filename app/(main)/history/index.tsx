@@ -97,6 +97,10 @@ const TransactionHistoryScreen: React.FC = () => {
   const [hasMore, setHasMore] = useState<boolean>(true);
 
   const performUsernameSearch = async (query: string) => {
+    if (query?.length === 0) {
+      setFilteredTransactions(allTransactions);
+      return;
+    }
     setLoading(true);
     try {
       const currentUserId = (await TokenManager.getUserData())._id || "";
@@ -118,12 +122,10 @@ const TransactionHistoryScreen: React.FC = () => {
     []
   );
   useEffect(() => {
-    if (searchText === "") {
+    if (searchText?.trim().length == 0) {
       setFilteredTransactions(allTransactions);
-    } else if (searchText.trim().length > 0) {
-      debounsPerformSearch(searchText.trim());
     }
-  }, [searchText, allTransactions]);
+  }, [allTransactions]);
 
   const loadTransactions = async (reset: boolean = false) => {
     if (loading) return;
@@ -197,7 +199,10 @@ const TransactionHistoryScreen: React.FC = () => {
             placeholderTextColor="#999"
             style={styles.searchInput}
             value={searchText}
-            onChangeText={setSearchText}
+            onChangeText={(e) => {
+              setSearchText(e);
+              debounsPerformSearch(e?.trim());
+            }}
           />
           <TouchableOpacity>
             <MaterialCommunityIcons
