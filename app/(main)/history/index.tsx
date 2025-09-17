@@ -97,6 +97,10 @@ const TransactionHistoryScreen: React.FC = () => {
   const [hasMore, setHasMore] = useState<boolean>(true);
 
   const performUsernameSearch = async (query: string) => {
+    if (query?.length === 0) {
+      setFilteredTransactions(allTransactions);
+      return;
+    }
     setLoading(true);
     try {
       const currentUserId = (await TokenManager.getUserData())._id || "";
@@ -108,13 +112,7 @@ const TransactionHistoryScreen: React.FC = () => {
       setFilteredTransactions(displayTransactions);
     } catch (error) {
       console.error("Username search error:", error);
-      const filtered = allTransactions.filter(
-        (transaction) =>
-          transaction.name.toLowerCase().includes(searchText.toLowerCase()) ||
-          transaction.txHash.toLowerCase().includes(searchText.toLowerCase()) ||
-          transaction.currency.toLowerCase().includes(searchText.toLowerCase())
-      );
-      setFilteredTransactions(filtered);
+      setFilteredTransactions(allTransactions);
     } finally {
       setLoading(false);
     }
@@ -124,20 +122,10 @@ const TransactionHistoryScreen: React.FC = () => {
     []
   );
   useEffect(() => {
-    if (searchText === "") {
+    if (searchText?.trim().length == 0) {
       setFilteredTransactions(allTransactions);
-    } else if (searchText.trim().length >= 2) {
-      debounsPerformSearch(searchText.trim());
-    } else {
-      const filtered = allTransactions.filter(
-        (transaction) =>
-          transaction.name.toLowerCase().includes(searchText.toLowerCase()) ||
-          transaction.txHash.toLowerCase().includes(searchText.toLowerCase()) ||
-          transaction.currency.toLowerCase().includes(searchText.toLowerCase())
-      );
-      setFilteredTransactions(filtered);
     }
-  }, [searchText, allTransactions]);
+  }, [allTransactions]);
 
   const loadTransactions = async (reset: boolean = false) => {
     if (loading) return;
@@ -177,20 +165,6 @@ const TransactionHistoryScreen: React.FC = () => {
   };
 
   useEffect(() => {
-    if (searchText === "") {
-      setFilteredTransactions(allTransactions);
-    } else {
-      const filtered = allTransactions.filter(
-        (transaction) =>
-          transaction.name.toLowerCase().includes(searchText.toLowerCase()) ||
-          transaction.txHash.toLowerCase().includes(searchText.toLowerCase()) ||
-          transaction.currency.toLowerCase().includes(searchText.toLowerCase())
-      );
-      setFilteredTransactions(filtered);
-    }
-  }, [searchText, allTransactions]);
-
-  useEffect(() => {
     setPage(1);
     setAllTransactions([]);
     loadTransactions(true);
@@ -225,7 +199,10 @@ const TransactionHistoryScreen: React.FC = () => {
             placeholderTextColor="#999"
             style={styles.searchInput}
             value={searchText}
-            onChangeText={setSearchText}
+            onChangeText={(e) => {
+              setSearchText(e);
+              debounsPerformSearch(e?.trim());
+            }}
           />
           <TouchableOpacity>
             <MaterialCommunityIcons
