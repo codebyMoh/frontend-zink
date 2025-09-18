@@ -1,6 +1,7 @@
 import { scanUserById } from "@/services/api/user";
 import { Ionicons } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
+import { BarCodeScanner } from "expo-barcode-scanner";
 import * as ImagePicker from "expo-image-picker";
 import { Stack, router } from "expo-router";
 import { useEffect, useState } from "react";
@@ -37,7 +38,7 @@ export default function QrScan() {
         params: {
           recipientAddress: user.smartWalletAddress,
           recipientId: user._id,
-          recipientName: user.name,
+          recipientName: user.userName,
           recipientUsername: user.userName,
         },
       });
@@ -53,15 +54,41 @@ export default function QrScan() {
 
   // upload image and scan the qr code
   const handlePickImage = async () => {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      alert("Permission required to access gallery");
-      return;
-    }
+    try {
+      const permission =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        alert("Permission required to access gallery");
+        return;
+      }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-    });
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      });
+      const imageUri = result?.assets?.[0]?.uri;
+      if (!imageUri) {
+        Alert.alert("Invalid image.");
+        return;
+      }
+      // New: Use BarCodeScanner to scan the selected image URI
+      const scannedResults = await BarCodeScanner.scanFromURLAsync(imageUri);
+      if (scannedResults.length > 0) {
+        const qrData = scannedResults[0].data;
+        if (!qrData) {
+          Alert.alert("Invalid image.");
+          return;
+        }
+        handleBarcodeScanned({ data: qrData });
+      } else {
+        Alert.alert(
+          "No QR Code Found",
+          "The selected image does not contain a valid QR code."
+        );
+      }
+    } catch (error) {
+      console.error("QR Scan Error:", error);
+      router.replace("/");
+    }
   };
   useEffect(() => {
     (async () => {
@@ -71,9 +98,6 @@ export default function QrScan() {
       }
     })();
   }, [requestPermission]);
-  useEffect(() => {
-    console.log("useeffect run.");
-  }, []);
   return (
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />

@@ -1,6 +1,6 @@
 import { AntDesign } from "@expo/vector-icons";
 import { Stack, router, useLocalSearchParams } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   SafeAreaView,
@@ -10,8 +10,22 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-
+const colors = [
+  "#da7b66ff",
+  "#a963e6ff",
+  "#6a82eeff",
+  "#e672b0ff",
+  "#b571f1ff",
+  "#647ff7ff",
+  "#56a5ebff",
+  "#f79951ff",
+  "#a164f1ff",
+  "#57a2e4ff",
+  "#a7e75eff",
+  "#e66e84ff",
+];
 export default function PaymentScreen() {
+  const [avatarColor, setAvatarColor] = useState("");
   const [amount, setAmount] = useState("");
   const [message, setMessage] = useState("Here's the money I owe you.");
   const [errorMessage, setErrorMessage] = useState("");
@@ -57,6 +71,10 @@ export default function PaymentScreen() {
       setIsLoading(false);
     }
   }
+  useEffect(() => {
+    const randomIndex = Math.floor(Math.random() * colors.length);
+    setAvatarColor(colors[randomIndex]);
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -76,7 +94,7 @@ export default function PaymentScreen() {
       <View style={styles.content}>
         {/* Avatar + Name */}
         <View style={styles.userInfo}>
-          <View style={styles.avatar}>
+          <View style={[styles.avatar, { backgroundColor: avatarColor }]}>
             <Text style={styles.avatarText}>
               {recipient?.charAt(0)?.toUpperCase()}
             </Text>
@@ -200,7 +218,6 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: "#e0e0e0",
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 12,
