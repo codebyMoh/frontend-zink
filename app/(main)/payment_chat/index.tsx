@@ -95,8 +95,13 @@ export default function PaymentChatScreen() {
   };
 
   const handleRequestPress = () => {
-    // TODO: Implement request functionality
-    console.log("Request payment from", recipientName);
+    router.push({
+      pathname: "/request_payment",
+      params: {
+        userId: currentUser?._id,
+        userName: currentUser?.userName,
+      },
+    });
   };
 
   const getFormattedDate = (dateString: string) => {
