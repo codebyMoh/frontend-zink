@@ -99,14 +99,14 @@ export default function PaymentChatScreen() {
     console.log("Request payment from", recipientName);
   };
 
- const getFormattedDate = (dateString: string) => {
-  const date = new Date(dateString);
-  const options: Intl.DateTimeFormatOptions = {
-    month: "short",
-    day: "numeric",
+  const getFormattedDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const options: Intl.DateTimeFormatOptions = {
+      month: "short",
+      day: "numeric",
+    };
+    return date.toLocaleDateString("en-US", options);
   };
-  return date.toLocaleDateString("en-US", options);
-};
 
   const renderTransaction = (transaction: ApiTransaction) => {
     if (!currentUser) return null;
@@ -114,7 +114,7 @@ export default function PaymentChatScreen() {
     const isCurrentUserSender = transaction.userId === currentUser._id;
     const transactionType = isCurrentUserSender ? "sent" : "received";
     const formattedAmount = transaction.amount.toLocaleString("en-IN");
-    const currencyDisplay = transaction.currency === 'INR' ? '₹' : '';
+    const currencyDisplay = transaction.currency === "INR" ? "₹" : "";
 
     return (
       <View key={transaction._id}>
@@ -131,11 +131,25 @@ export default function PaymentChatScreen() {
         </View>
 
         {/* Transaction card */}
-        <View
+        <TouchableOpacity
           style={[
             styles.transactionCard,
             transactionType === "sent" ? styles.sentCard : styles.receivedCard,
           ]}
+          onPress={() => {
+            router.push({
+              pathname: "/transaction_details",
+              params: {
+                amount: transaction.amount,
+                currency: transaction.currency,
+                recipient: transaction.recipientUserName,
+                transactionHash: transaction.tx,
+                date: transaction.createdAt,
+                transactionType:
+                  transactionType === "sent" ? "send" : "receive",
+              },
+            });
+          }}
         >
           <Text style={styles.transactionTitle}>
             {transactionType === "sent"
@@ -150,11 +164,12 @@ export default function PaymentChatScreen() {
           )}
 
           <View style={styles.amountContainer}>
-            {transaction.currency === 'USDC' && (
+            {transaction.currency === "USDC" && (
               <Image source={UsdcIcon} style={styles.usdcIcon} />
             )}
             <Text style={styles.transactionAmount}>
-              {currencyDisplay}{formattedAmount}
+              {currencyDisplay}
+              {formattedAmount}
             </Text>
           </View>
 
@@ -165,7 +180,7 @@ export default function PaymentChatScreen() {
             </Text>
             <AntDesign name="right" size={14} color="#B0B0B0" />
           </TouchableOpacity>
-        </View>
+        </TouchableOpacity>
       </View>
     );
   };
@@ -186,10 +201,14 @@ export default function PaymentChatScreen() {
     return (
       <View style={styles.menuContainer}>
         {menuItems.map((item, index) => (
-          <TouchableOpacity key={index} style={styles.menuItem} onPress={() => {
-            console.log("Menu item pressed:", item);
-            setShowMenu(false);
-          }}>
+          <TouchableOpacity
+            key={index}
+            style={styles.menuItem}
+            onPress={() => {
+              console.log("Menu item pressed:", item);
+              setShowMenu(false);
+            }}
+          >
             <Text style={styles.menuText}>{item}</Text>
           </TouchableOpacity>
         ))}
@@ -261,7 +280,10 @@ export default function PaymentChatScreen() {
         <TouchableOpacity style={styles.payButton} onPress={handlePayPress}>
           <Text style={styles.payButtonText}>Pay</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.requestButton} onPress={handleRequestPress}>
+        <TouchableOpacity
+          style={styles.requestButton}
+          onPress={handleRequestPress}
+        >
           <Text style={styles.requestButtonText}>Request</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.messageButton}>
@@ -387,8 +409,8 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   amountContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 8,
   },
   transactionAmount: {
