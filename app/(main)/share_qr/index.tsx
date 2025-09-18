@@ -13,23 +13,105 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Image,
+  Modal,
+  TextInput,
 } from "react-native";
 import QRCodeSvg from "react-native-qrcode-svg";
 import Toast from "react-native-toast-message";
 import ViewShot from "react-native-view-shot";
-import * as Clipboard from 'expo-clipboard';
-import { Alert, Modal, TextInput } from 'react-native';
-import { editPaymentId } from '@/services/api/user';
+import * as Clipboard from "expo-clipboard";
+import { editPaymentId } from "@/services/api/user";
+import { useSmartAccountClient } from "@account-kit/react-native";
+import { parseAbi } from "viem";
+
+interface BalanceState {
+  usdc: string;
+  isLoading: boolean;
+}
 
 export default function ShareQRCodeScreen() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [userId, setUserId] = useState(null);
-  const [userName, setUserName] = useState<string>("");
+  const [actualUserName, setActualUserName] = useState<string>("");
+  const [paymentId, setPaymentId] = useState<string>("");
   const [showEditModal, setShowEditModal] = useState(false);
-  const [editableUsername, setEditableUsername] = useState('');
+  const [editablePaymentId, setEditablePaymentId] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [isPaymentIdEdited, setIsPaymentIdEdited] = useState(false);
   const viewShotRef = useRef<string | any>(null);
+
+  const [balances, setBalances] = useState<BalanceState>({
+    usdc: "0",
+    isLoading: true,
+  });
+
+  const { client } = useSmartAccountClient({
+    type: "ModularAccountV2",
+  });
+  const account = client?.account;
+
+  // TODO: add this in env
+  const BASE_USDC = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
+
+  const loadBalances = async () => {
+    if (!client || !account?.address) return;
+
+    try {
+      setBalances((prev) => ({ ...prev, isLoading: true }));
+
+      // get USDC balance
+      const smartAccountUsdcBalance = await client.readContract({
+        address: BASE_USDC,
+        abi: parseAbi([
+          "function balanceOf(address owner) view returns (uint256)",
+        ]),
+        functionName: "balanceOf",
+        args: [account.address],
+      });
+
+      const smartUsdcFormatted = (
+        Number(smartAccountUsdcBalance) / 1e6
+      ).toFixed(3);
+      setBalances({
+        usdc: parseFloat(smartUsdcFormatted).toFixed(3),
+        isLoading: false,
+      });
+    } catch (error) {
+      console.error("Failed to load balances:", error);
+      setBalances((prev) => ({ ...prev, isLoading: false }));
+    }
+  };
+
+  const formatBalanceForDisplay = (balance: string) => {
+    const [whole, decimal] = balance.split(".");
+    return {
+      whole: whole || "0",
+      decimal: decimal || "00",
+    };
+  };
+
+  const displayBalance = formatBalanceForDisplay(balances.usdc);
+
+  const getUserData = async () => {
+    const userData = await TokenManager.getUserData();
+    if (userData?._id) {
+      setUserId(userData?._id || null);
+      setActualUserName(userData?.userName || "")
+      setPaymentId(userData?.paymentId || "");
+      setIsPaymentIdEdited(userData?.isPaymentIdEdited || false);
+    }
+  };
+
+  useEffect(() => {
+    getUserData();
+  }, []);
+
+  useEffect(() => {
+    if (client && account?.address) {
+      loadBalances();
+    }
+  }, [client, account?.address]);
 
   const handleDownloadQR = async () => {
     try {
@@ -60,80 +142,65 @@ export default function ShareQRCodeScreen() {
     }
   };
 
-
-  const handleCopyUsername = async () => {
-  try {
-    await Clipboard.setStringAsync(userName);
-    Toast.show({
-      type: "success",
-      text1: "Copied!",
-      text2: "Username copied to clipboard",
-    });
-  } catch (error) {
-    console.log("Error copying username:", error);
-  }
-};
-
-const handleEditUsername = async () => {
-  if (isPaymentIdEdited) {
-    Toast.show({
-      type: "error",
-      text1: "Error", 
-      text2: "You can only edit paymentId once.",
-    });
-    return;
-  }
-  
-  const usernameWithoutZink = userName?.replace('.zink', '') || '';
-  setEditableUsername(usernameWithoutZink);
-  setShowEditModal(true);
-};
-
-const handleSaveUsername = async () => {
-  try {
-    setIsEditing(true);
-    const response = await editPaymentId(editableUsername);
-    
-    setUserName(`${editableUsername}.zink`);
-    setIsPaymentIdEdited(true); 
-    
-    const userData = await TokenManager.getUserData();
-    if (userData) {
-      userData.paymentId = `${editableUsername}.zink`;
-      userData.isPaymentIdEdited = true;
-      await TokenManager.saveUserData(userData);
+  const handleCopyPaymentId = async () => {
+    try {
+      await Clipboard.setStringAsync(paymentId);
+      Toast.show({
+        type: "success",
+        text1: "Copied!",
+        text2: "Payment ID copied to clipboard",
+      });
+    } catch (error) {
+      console.log("Error copying paymentId:", error);
     }
-    
-    setShowEditModal(false);
-    Toast.show({
-      type: "success",
-      text1: "Success",
-      text2: "Username updated successfully",
-    });
-  } catch (error) {
-    Toast.show({
-      type: "error",
-      text1: "Error",
-      text2: error instanceof Error ? error.message : 'Something went wrong',
-    });
-  } finally {
-    setIsEditing(false);
-  }
-};
+  };
 
+  const handleEditPaymentId = async () => {
+    if (isPaymentIdEdited) {
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "You can only edit paymentId once.",
+      });
+      return;
+    }
 
-  const getUserData = async () => {
-  const userData = await TokenManager.getUserData();
-  if (userData?._id) {
-    setUserId(userData?._id || null);
-    setUserName(userData?.paymentId || null);
-    setIsPaymentIdEdited(userData?.isPaymentIdEdited || false); 
-  }
-};
+    const usernameWithoutZink = paymentId?.replace(".zink", "") || "";
+    setEditablePaymentId(usernameWithoutZink);
+    setShowEditModal(true);
+  };
 
-  useEffect(() => {
-    getUserData();
-  }, []);
+  const handleSavePaymentId = async () => {
+    try {
+      setIsEditing(true);
+      const response = await editPaymentId(editablePaymentId);
+
+      setPaymentId(`${editablePaymentId}.zink`);
+      setIsPaymentIdEdited(true);
+
+      const userData = await TokenManager.getUserData();
+      if (userData) {
+        userData.paymentId = `${editablePaymentId}.zink`;
+        userData.isPaymentIdEdited = true;
+        await TokenManager.saveUserData(userData);
+      }
+
+      setShowEditModal(false);
+      Toast.show({
+        type: "success",
+        text1: "Success",
+        text2: "Payment ID updated successfully",
+      });
+    } catch (error) {
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: error instanceof Error ? error.message : "Something went wrong",
+      });
+    } finally {
+      setIsEditing(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -158,30 +225,76 @@ const handleSaveUsername = async () => {
       </TouchableOpacity>
       <ViewShot ref={viewShotRef} options={{ format: "png", quality: 1 }}>
         <View style={styles.card}>
-          <View style={styles.usernameContainer}>
-          <Text style={styles.userName}>{userName}</Text>
-          <View style={styles.usernameActions}>
-            <TouchableOpacity onPress={handleCopyUsername} style={styles.actionButton}>
-              <MaterialCommunityIcons name="content-copy" size={20} color="#666" />
+          <View style={styles.profileSection}>
+            <View style={styles.profileInitialCircle}>
+              <Text style={styles.profileInitialText}>
+                {actualUserName?.charAt(0)?.toUpperCase() || "Z"}
+              </Text>
+            </View>
+            <Text style={styles.profileName}>
+              {actualUserName || "Your Name"}
+            </Text>
+          </View>
+
+          <View style={styles.qrCodeWrapper}>
+            <View style={styles.qrContainer}>
+              {userId && (
+                <QRCodeSvg
+                  value={userId}
+                  size={220}
+                  color="black"
+                  backgroundColor="white"
+                  logo={require("../../../assets/images/logos/Zink-Qr-Logo.png")}
+                  logoSize={50}
+                  logoBackgroundColor="white"
+                  logoBorderRadius={25}
+                />
+              )}
+            </View>
+            <Text style={styles.scanInstructionText}>
+              Scan to pay with any ZINK app
+            </Text>
+          </View>
+
+          <View style={styles.paymentIdDetails}>
+            <Text style={styles.paymentIdLabel}>Payment ID:</Text>
+            <Text style={styles.paymentIdText}>{paymentId}</Text>
+            <TouchableOpacity
+              onPress={handleCopyPaymentId}
+              style={styles.actionButton}
+            >
+              <MaterialCommunityIcons
+                name="content-copy"
+                size={20}
+                color="#666"
+              />
             </TouchableOpacity>
-            <TouchableOpacity onPress={handleEditUsername} style={styles.actionButton}>
+            <TouchableOpacity
+              onPress={handleEditPaymentId}
+              style={styles.actionButton}
+            >
               <MaterialCommunityIcons name="pencil" size={20} color="#666" />
             </TouchableOpacity>
           </View>
-        </View>
-          <View style={styles.qrContainer}>
-            {userId && (
-              <QRCodeSvg
-                value={userId}
-                size={220}
-                color="black"
-                backgroundColor="white"
-                logo={require("../../../assets/images/logos/Zink-Qr-Logo.png")}
-                logoSize={50}
-                logoBackgroundColor="white"
-                logoBorderRadius={25}
+
+          {/* Balance Display */}
+          <View style={styles.balanceDisplayContainer}>
+            <View style={styles.balanceDisplay}>
+              <Image
+                source={require("../../../assets/images/token/usdc.png")}
+                style={styles.usdcIcon}
               />
-            )}
+              {balances.isLoading ? (
+                <ActivityIndicator color="#2E7D32" size="large" />
+              ) : (
+                <Text style={styles.balanceAmount}>
+                  {displayBalance.whole}
+                  <Text style={styles.balanceDecimal}>
+                    .{displayBalance.decimal}
+                  </Text>
+                </Text>
+              )}
+            </View>
           </View>
         </View>
       </ViewShot>
@@ -201,52 +314,52 @@ const handleSaveUsername = async () => {
         </TouchableOpacity>
       </View>
 
-            {/* Edit Username Modal */}
-          <Modal
-            visible={showEditModal}
-            transparent={true}
-            animationType="slide"
-            onRequestClose={() => setShowEditModal(false)}
-          >
-            <View style={styles.modalOverlay}>
-              <View style={styles.modalContent}>
-                <Text style={styles.modalTitle}>Edit Username</Text>
-                <View style={styles.inputContainer}>
-                  <TextInput
-                    style={styles.textInput}
-                    value={editableUsername}
-                    onChangeText={setEditableUsername}
-                    placeholder="Enter username"
-                    maxLength={20}
-                  />
-                  <Text style={styles.zinkSuffix}>.zink</Text>
-                </View>
-                <Text style={styles.modalNote}>
-                  Username can only be edited once and must be 6-20 characters.
-                </Text>
-                <View style={styles.modalButtons}>
-                  <TouchableOpacity
-                    style={styles.cancelButton}
-                    onPress={() => setShowEditModal(false)}
-                  >
-                    <Text style={styles.cancelButtonText}>Cancel</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.saveButton}
-                    onPress={handleSaveUsername}
-                    disabled={isEditing || editableUsername.length < 6}
-                  >
-                    {isEditing ? (
-                      <ActivityIndicator size="small" color="#fff" />
-                    ) : (
-                      <Text style={styles.saveButtonText}>Save</Text>
-                    )}
-                  </TouchableOpacity>
-                </View>
-              </View>
+      {/* Edit Payment ID Modal */}
+      <Modal
+        visible={showEditModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowEditModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Edit Payment ID</Text>
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.textInput}
+                value={editablePaymentId}
+                onChangeText={setEditablePaymentId}
+                placeholder="Enter username"
+                maxLength={20}
+              />
+              <Text style={styles.zinkSuffix}>.zink</Text>
             </View>
-          </Modal>
-        <Toast />
+            <Text style={styles.modalNote}>
+              Payment ID can only be edited once and must be 6-20 characters.
+            </Text>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => setShowEditModal(false)}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.saveButton}
+                onPress={handleSavePaymentId}
+                disabled={isEditing || editablePaymentId.length < 6}
+              >
+                {isEditing ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text style={styles.saveButtonText}>Save</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+      <Toast />
     </SafeAreaView>
   );
 }
@@ -264,6 +377,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    marginBottom: 15,
   },
   card: {
     backgroundColor: "#f9f9f9",
@@ -275,22 +389,97 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     shadowRadius: 5,
     elevation: 3,
+    width: "100%",
   },
-  userName: {
-    fontSize: 18,
+  profileSection: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 20,
+    width: "100%",
+    justifyContent: "center",
+  },
+  profileInitialCircle: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: "#9e9e9e",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 10,
+  },
+  profileInitialText: {
+    color: "#fff",
+    fontSize: 24,
+    fontWeight: "bold",
+  },
+  profileName: {
+    fontSize: 20,
     fontWeight: "bold",
     color: "#000",
+  },
+  qrCodeWrapper: {
+    alignItems: "center",
+    marginBottom: 20,
   },
   qrContainer: {
     backgroundColor: "white",
     padding: 20,
     borderRadius: 12,
-    marginBottom: 20,
   },
-  walletText: {
-    fontSize: 12,
+  scanInstructionText: {
+    fontSize: 14,
     color: "#555",
+    marginTop: 10,
     textAlign: "center",
+  },
+  paymentIdDetails: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 20,
+    width: "100%",
+  },
+  paymentIdLabel: {
+    fontSize: 14,
+    color: "#555",
+    marginRight: 5,
+  },
+  paymentIdText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#000",
+  },
+  actionButton: {
+    padding: 5,
+    marginLeft: 5,
+  },
+  balanceDisplayContainer: {
+    marginTop: 10,
+    alignItems: "center",
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    backgroundColor: "#E8F5E8",
+    borderRadius: 10,
+    width: "90%",
+  },
+  balanceDisplay: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  usdcIcon: {
+    width: 20,
+    height: 20,
+    marginRight: 6,
+  },
+  balanceAmount: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#2E7D32",
+  },
+  balanceDecimal: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#2E7D32",
   },
   bottomButtons: {
     flexDirection: "row",
@@ -298,17 +487,13 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   shareButton: {
-    width: "45%",
-    display: "flex",
+    width: "48%",
     flexDirection: "row",
     gap: 3,
     justifyContent: "center",
     backgroundColor: "#5abb5eff",
     borderRadius: 30,
-    padding: 12,
-    marginBottom: 8,
-    marginHorizontal: 5,
-    paddingVertical: 15,
+    padding: 15,
     alignItems: "center",
   },
   shareButtonText: {
@@ -317,18 +502,14 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
   scannerButton: {
-    width: "45%",
-    display: "flex",
+    width: "48%",
     flexDirection: "row",
     gap: 5,
     justifyContent: "center",
     borderColor: "#f0f0f0",
     borderWidth: 3,
     borderRadius: 30,
-    padding: 12,
-    marginBottom: 8,
-    marginHorizontal: 5,
-    paddingVertical: 15,
+    padding: 15,
     alignItems: "center",
   },
   scannerButtonText: {
@@ -336,46 +517,30 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#000",
   },
-
-  usernameContainer: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  justifyContent: 'center',
-  marginBottom: 20,
-  width: '100%',
-  },
-  usernameActions: {
-    flexDirection: 'row',
-    marginLeft: 10,
-  },
-  actionButton: {
-    padding: 5,
-    marginLeft: 5,
-  },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   modalContent: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 20,
     padding: 20,
-    width: '90%',
+    width: "90%",
     maxWidth: 400,
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    textAlign: 'center',
+    fontWeight: "bold",
+    textAlign: "center",
     marginBottom: 20,
   },
   inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: "#ddd",
     borderRadius: 10,
     paddingHorizontal: 15,
     marginBottom: 10,
@@ -387,18 +552,18 @@ const styles = StyleSheet.create({
   },
   zinkSuffix: {
     fontSize: 16,
-    color: '#666',
+    color: "#666",
     paddingLeft: 5,
   },
   modalNote: {
     fontSize: 12,
-    color: '#666',
-    textAlign: 'center',
+    color: "#666",
+    textAlign: "center",
     marginBottom: 20,
   },
   modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   cancelButton: {
     flex: 1,
@@ -406,24 +571,24 @@ const styles = StyleSheet.create({
     marginRight: 10,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#ddd',
-    alignItems: 'center',
+    borderColor: "#ddd",
+    alignItems: "center",
   },
   saveButton: {
     flex: 1,
     paddingVertical: 15,
     marginLeft: 10,
     borderRadius: 10,
-    backgroundColor: '#5abb5eff',
-    alignItems: 'center',
+    backgroundColor: "#5abb5eff",
+    alignItems: "center",
   },
   cancelButtonText: {
     fontSize: 16,
-    color: '#666',
+    color: "#666",
   },
   saveButtonText: {
     fontSize: 16,
-    color: 'white',
-    fontWeight: '600',
+    color: "white",
+    fontWeight: "600",
   },
 });

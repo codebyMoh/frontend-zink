@@ -4,7 +4,7 @@ import {
   recipientuser,
 } from "@/services/api/transaction";
 import { TokenManager } from "@/services/tokenManager";
-import { AntDesign } from "@expo/vector-icons";
+import { AntDesign, FontAwesome, MaterialIcons } from "@expo/vector-icons";
 import { Stack, router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import {
@@ -15,7 +15,9 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Image,
 } from "react-native";
+import UsdcIcon from "../../../assets/images/token/usdc.png";
 
 export default function PaymentChatScreen() {
   const params = useLocalSearchParams();
@@ -26,6 +28,7 @@ export default function PaymentChatScreen() {
   const [recipientuser, setRecipientuser] = useState<recipientuser>();
   const [isLoading, setIsLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [showMenu, setShowMenu] = useState(false);
 
   useEffect(() => {
     const loadCurrentUser = async () => {
@@ -86,7 +89,7 @@ export default function PaymentChatScreen() {
       params: {
         recipientId: recipientuser?._id,
         recipientName: recipientuser?.userName,
-        recipientAddress: recipientuser?.walletAddressEVM,
+        recipientAddress: recipientuser?.smartWalletAddress,
       },
     });
   };
@@ -96,29 +99,35 @@ export default function PaymentChatScreen() {
     console.log("Request payment from", recipientName);
   };
 
+ const getFormattedDate = (dateString: string) => {
+  const date = new Date(dateString);
+  const options: Intl.DateTimeFormatOptions = {
+    month: "short",
+    day: "numeric",
+  };
+  return date.toLocaleDateString("en-US", options);
+};
+
   const renderTransaction = (transaction: ApiTransaction) => {
     if (!currentUser) return null;
 
     const isCurrentUserSender = transaction.userId === currentUser._id;
     const transactionType = isCurrentUserSender ? "sent" : "received";
+    const formattedAmount = transaction.amount.toLocaleString("en-IN");
+    const currencyDisplay = transaction.currency === 'INR' ? '₹' : '';
 
     return (
       <View key={transaction._id}>
         {/* Date separator */}
         <View style={styles.dateSeparator}>
-          <View style={styles.dateSeparatorLine} />
           <Text style={styles.dateSeparatorText}>
-            {new Date(transaction.createdAt).toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-            })}
-            ,{" "}
-            {new Date(transaction.createdAt).toLocaleTimeString("en-US", {
-              hour: "numeric",
+            {getFormattedDate(transaction.createdAt)}
+            {`, ${new Date(transaction.createdAt).toLocaleTimeString("en-US", {
+              hour: "2-digit",
               minute: "2-digit",
-            })}
+              hour12: true,
+            })}`}
           </Text>
-          <View style={styles.dateSeparatorLine} />
         </View>
 
         {/* Transaction card */}
@@ -128,63 +137,62 @@ export default function PaymentChatScreen() {
             transactionType === "sent" ? styles.sentCard : styles.receivedCard,
           ]}
         >
-          <Text
-            style={[
-              styles.transactionTitle,
-              transactionType === "sent" && styles.sentText,
-            ]}
-          >
+          <Text style={styles.transactionTitle}>
             {transactionType === "sent"
               ? `Payment to ${recipientName}`
               : "Payment to you"}
           </Text>
 
           {transaction.message && (
-            <Text
-              style={[
-                styles.transactionDescription,
-                transactionType === "sent" && styles.sentText,
-              ]}
-            >
+            <Text style={styles.transactionDescription}>
               {transaction.message}
             </Text>
           )}
 
-          <Text
-            style={[
-              styles.transactionAmount,
-              transactionType === "sent" && styles.sentText,
-            ]}
-          >
-            {transaction.amount.toLocaleString("en-IN")} {transaction.currency}
-          </Text>
-
-          <View style={styles.transactionStatus}>
-            <View
-              style={[styles.statusIndicator, { backgroundColor: "#4CAF50" }]}
-            />
-            <Text
-              style={[
-                styles.statusText,
-                {
-                  color: "#4CAF50",
-                },
-              ]}
-            >
-              Paid •{" "}
-              {new Date(transaction.createdAt).toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-              })}
+          <View style={styles.amountContainer}>
+            {transaction.currency === 'USDC' && (
+              <Image source={UsdcIcon} style={styles.usdcIcon} />
+            )}
+            <Text style={styles.transactionAmount}>
+              {currencyDisplay}{formattedAmount}
             </Text>
-            <AntDesign
-              name="right"
-              size={16}
-              color={transactionType === "sent" ? "#E6F2FF" : "#999"}
-              style={styles.statusArrow}
-            />
           </View>
+
+          <TouchableOpacity style={styles.transactionStatus} onPress={() => {}}>
+            <FontAwesome name="check-circle" size={14} color="#34C759" />
+            <Text style={styles.statusText}>
+              Paid • {getFormattedDate(transaction.createdAt)}
+            </Text>
+            <AntDesign name="right" size={14} color="#B0B0B0" />
+          </TouchableOpacity>
         </View>
+      </View>
+    );
+  };
+
+  const renderDropdownMenu = () => {
+    if (!showMenu) return null;
+
+    const menuItems = [
+      "Start new group",
+      "Block this person",
+      "Turn off messaging",
+      "Report user",
+      "Refresh",
+      "Get help",
+      "Send feedback",
+    ];
+
+    return (
+      <View style={styles.menuContainer}>
+        {menuItems.map((item, index) => (
+          <TouchableOpacity key={index} style={styles.menuItem} onPress={() => {
+            console.log("Menu item pressed:", item);
+            setShowMenu(false);
+          }}>
+            <Text style={styles.menuText}>{item}</Text>
+          </TouchableOpacity>
+        ))}
       </View>
     );
   };
@@ -216,13 +224,22 @@ export default function PaymentChatScreen() {
           </View>
         </View>
 
-        <View style={styles.headerSpacer} />
+        <TouchableOpacity
+          style={styles.headerIcon}
+          onPress={() => setShowMenu(!showMenu)}
+        >
+          <MaterialIcons name="more-vert" size={24} color="#000" />
+        </TouchableOpacity>
       </View>
+
+      {/* Dropdown Menu */}
+      {renderDropdownMenu()}
 
       {/* Transaction History */}
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingVertical: 20 }}
       >
         <View style={styles.transactionContainer}>
           {isLoading ? (
@@ -244,6 +261,12 @@ export default function PaymentChatScreen() {
         <TouchableOpacity style={styles.payButton} onPress={handlePayPress}>
           <Text style={styles.payButtonText}>Pay</Text>
         </TouchableOpacity>
+        <TouchableOpacity style={styles.requestButton} onPress={handleRequestPress}>
+          <Text style={styles.requestButtonText}>Request</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.messageButton}>
+          <Text style={styles.messageButtonText}>Message...</Text>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -252,63 +275,55 @@ export default function PaymentChatScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F5F5F5",
+    backgroundColor: "#EFEFEF",
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    paddingTop: Platform.OS === "android" ? 12 : 50,
+    paddingHorizontal: 8,
+    paddingVertical: 10,
+    paddingTop: Platform.OS === "android" ? 10 : 50,
     backgroundColor: "#FFF",
-    borderBottomWidth: 1,
-    borderBottomColor: "#E0E0E0",
   },
   backButton: {
     padding: 8,
+    marginRight: 4,
   },
   headerCenter: {
-    flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    marginLeft: 12,
+    flex: 1,
   },
   avatar: {
-    width: 45,
-    height: 45,
-    borderRadius: 22.5,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 12,
+    marginRight: 10,
   },
   avatarText: {
     color: "#FFF",
-    fontSize: 18,
-    fontWeight: "bold",
+    fontSize: 16,
+    fontWeight: "500",
   },
   headerInfo: {
     flex: 1,
   },
   headerName: {
-    fontSize: 18,
-    fontWeight: "600",
+    fontSize: 16,
+    fontWeight: "500",
     color: "#000",
   },
-  headerUsername: {
-    fontSize: 14,
-    color: "#666",
-    marginTop: 2,
-  },
-  headerSpacer: {
-    width: 32,
+  headerIcon: {
+    padding: 8,
+    marginLeft: 8,
   },
   scrollView: {
     flex: 1,
   },
   transactionContainer: {
     paddingHorizontal: 16,
-    paddingTop: 20,
-    paddingBottom: 100,
   },
   loadingContainer: {
     padding: 20,
@@ -329,87 +344,91 @@ const styles = StyleSheet.create({
   dateSeparator: {
     flexDirection: "row",
     alignItems: "center",
-    marginVertical: 20,
+    justifyContent: "center",
+    marginVertical: 10,
   },
   dateSeparatorText: {
     fontSize: 12,
-    color: "#999",
-    backgroundColor: "#F5F5F5",
+    color: "#777",
     paddingHorizontal: 12,
-  },
-  dateSeparatorLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: "#E0E0E0",
+    backgroundColor: "#EFEFEF",
+    borderRadius: 10,
   },
   transactionCard: {
     backgroundColor: "#FFF",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 20,
+    borderRadius: 16,
+    padding: 18,
+    width: 250,
+    marginBottom: 10,
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 1,
     },
     shadowOpacity: 0.1,
-    shadowRadius: 3,
+    shadowRadius: 2,
     elevation: 2,
   },
+  sentCard: {
+    alignSelf: "flex-end",
+  },
+  receivedCard: {
+    alignSelf: "flex-start",
+  },
   transactionTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "500",
-    color: "#000",
-    marginBottom: 4,
+    color: "#333",
+    marginBottom: 2,
   },
   transactionDescription: {
-    fontSize: 14,
-    color: "#666",
+    fontSize: 13,
+    color: "#777",
+    marginBottom: 6,
+  },
+  amountContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 8,
   },
   transactionAmount: {
-    fontSize: 28,
-    fontWeight: "bold",
+    fontSize: 24,
+    fontWeight: "600",
     color: "#000",
-    marginBottom: 12,
+  },
+  usdcIcon: {
+    width: 28,
+    height: 28,
+    marginRight: 4,
   },
   transactionStatus: {
     flexDirection: "row",
     alignItems: "center",
-  },
-  statusIndicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 8,
+    justifyContent: "space-between",
   },
   statusText: {
-    fontSize: 14,
+    fontSize: 13,
+    color: "#555",
     fontWeight: "500",
+    marginLeft: 4,
     flex: 1,
   },
-  statusArrow: {
-    marginLeft: 8,
-  },
   bottomActions: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
     flexDirection: "row",
     paddingHorizontal: 16,
-    paddingVertical: 16,
-    paddingBottom: Platform.OS === "ios" ? 34 : 16,
+    paddingVertical: 10,
+    paddingBottom: Platform.OS === "ios" ? 34 : 10,
     backgroundColor: "#FFF",
-    borderTopWidth: 1,
+    borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: "#E0E0E0",
     gap: 12,
+    alignItems: "center",
   },
   payButton: {
     flex: 1,
-    backgroundColor: "#34C759",
+    backgroundColor: "#1A73E8",
     borderRadius: 25,
-    paddingVertical: 14,
+    paddingVertical: 12,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -418,18 +437,53 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
   },
-  sentCard: {
-    alignSelf: "flex-end",
-    backgroundColor: "#FFF",
+  requestButton: {
+    flex: 1,
+    backgroundColor: "#F0F0F0",
+    borderRadius: 25,
+    paddingVertical: 12,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  receivedCard: {
-    alignSelf: "flex-start",
-    backgroundColor: "#FFF",
-  },
-  sentText: {
+  requestButtonText: {
     color: "#000",
+    fontSize: 16,
+    fontWeight: "600",
   },
-  receivedText: {
-    color: "#000",
+  messageButton: {
+    flex: 1.5,
+    backgroundColor: "#F0F0F0",
+    borderRadius: 25,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  messageButtonText: {
+    color: "#777",
+    fontSize: 16,
+  },
+  menuContainer: {
+    position: "absolute",
+    top: Platform.OS === "android" ? 50 : 80,
+    right: 16,
+    backgroundColor: "white",
+    borderRadius: 8,
+    paddingVertical: 8,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    zIndex: 100,
+  },
+  menuItem: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  menuText: {
+    fontSize: 16,
+    color: "#333",
   },
 });

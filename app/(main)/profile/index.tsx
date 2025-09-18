@@ -105,7 +105,7 @@ useEffect(() => {
       <View style={styles.content}>
         {/* Pay with card */}
         <TouchableOpacity style={styles.option}>
-          <Ionicons name="card" size={24} color="#4CAF50" />
+          <Ionicons name="card" size={24} color="#1565C0" />
           <View>
             <Text style={styles.optionText}>
               Pay with credit or debit cards
@@ -116,7 +116,7 @@ useEffect(() => {
 
         {/* QR Code */}
         <TouchableOpacity style={styles.option} onPress={()=>router.push("/share_qr")} >
-          <AntDesign name="qrcode" size={24} color="#4CAF50" />
+          <AntDesign name="qrcode" size={24} color="#1565C0" />
           <View>
             <Text style={styles.optionText}>Your QR code</Text>
             <Text style={styles.smallText}>
@@ -127,7 +127,7 @@ useEffect(() => {
 
         {/* Your Payment ID */}
         {/* <TouchableOpacity style={styles.option}>
-          <MaterialIcons name="account-balance-wallet" size={24} color="#4CAF50" />
+          <MaterialIcons name="account-balance-wallet" size={24} color="#1565C0" />
           <View>
             <Text style={styles.optionText}>Your Payment ID</Text>
             <Text style={styles.smallText}>
@@ -141,7 +141,7 @@ useEffect(() => {
           <MaterialCommunityIcons
             name="refresh-auto"
             size={24}
-            color="#4CAF50"
+            color="#1565C0"
           />
           <View>
             <Text style={styles.optionText}>Autopay</Text>
@@ -152,7 +152,7 @@ useEffect(() => {
 
         {/* UPI Circle */}
         {/* <TouchableOpacity style={styles.option}>
-          <MaterialIcons name="wifi-tethering" size={24} color="#4CAF50" />
+          <MaterialIcons name="wifi-tethering" size={24} color="#1565C0" />
           <View>
             <Text style={styles.optionText}>UPI Circle</Text>
             <Text style={styles.smallText}>
@@ -163,24 +163,24 @@ useEffect(() => {
 
         {/* Settings */}
         <TouchableOpacity style={styles.option}>
-          <Ionicons name="settings-outline" size={24} color="#4CAF50" />
+          <Ionicons name="settings-outline" size={24} color="#1565C0" />
           <Text style={styles.optionText}>Settings</Text>
         </TouchableOpacity>
 
         {/* Manage Google Account */}
         <TouchableOpacity style={styles.option}>
-          <FontAwesome6 name="user-circle" size={24} color="#4CAF50" />
+          <FontAwesome6 name="user-circle" size={24} color="#1565C0" />
           <Text style={styles.optionText}>Manage Google account</Text>
         </TouchableOpacity>
 
         {/* Get help */}
         <TouchableOpacity style={styles.option}>
-          <Feather name="help-circle" size={24} color="#4CAF50" />
+          <Feather name="help-circle" size={24} color="#1565C0" />
           <Text style={styles.optionText}>Get help</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.option}>
-          <Fontisto name="world-o" size={24} color="#4CAF50" />
+          <Fontisto name="world-o" size={24} color="#1565C0" />
           <Text style={styles.optionText}>Language</Text>
         </TouchableOpacity>
         {/* Divider */}
