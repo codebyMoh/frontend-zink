@@ -71,12 +71,12 @@ const OffersAndRewards: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 20,
+    // marginTop: 20,
     marginBottom: 20,
   },
   title: {
     fontSize: 22,
-    fontWeight: "600",
+    fontWeight: "medium",
     color: "#000",
     marginHorizontal: 20,
     marginBottom: 15,
@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#000",
     textAlign: "center",
-    fontWeight: "500",
+    // fontWeight: "500",
   },
 });
 

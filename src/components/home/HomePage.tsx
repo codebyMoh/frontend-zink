@@ -133,8 +133,56 @@ export default function WalletHomePage() {
   const [recentPeople, setRecentPeople] = useState<ContactItem[]>([]);
   const [isLoadingPeople, setIsLoadingPeople] = useState(true);
   const [userData, setUserData] = useState<userData>(); // fallback name
+  const [balances, setBalances] = useState<BalanceState>({
+    usdc: "0",
+    isLoading: true,
+  });
 
   const user = useUser();
+
+   const { client } = useSmartAccountClient({
+    type: "ModularAccountV2",
+  });
+  const account = client?.account;
+  const BASE_USDC = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"; // USDC contract address on Base
+
+  const loadBalances = async () => {
+  if (!client || !account?.address) return;
+
+  try {
+    setBalances((prev) => ({ ...prev, isLoading: true }));
+    const smartAccountUsdcBalance = await client.readContract({
+      address: BASE_USDC,
+      abi: parseAbi([
+        "function balanceOf(address owner) view returns (uint256)",
+      ]),
+      functionName: "balanceOf",
+      args: [account.address],
+    });
+
+    // Change to toFixed(3) to get three decimal places
+    const smartUsdcFormatted = (
+      Number(smartAccountUsdcBalance) / 1e6
+    ).toFixed(3); 
+
+    setBalances({
+      usdc: parseFloat(smartUsdcFormatted).toFixed(3),
+      isLoading: false,
+    });
+  } catch (error) {
+    console.error("Failed to load balances:", error);
+    setBalances((prev) => ({ ...prev, isLoading: false }));
+  }
+};
+  const formatBalanceForDisplay = (balance: string) => {
+      const [whole, decimal] = balance.split(".");
+      return {
+        whole: whole || "0",
+        decimal: decimal ? decimal.padEnd(3, '0') : "00", // Ensure two decimal places
+      };
+    };
+
+  const displayBalance = formatBalanceForDisplay(balances.usdc);
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -208,7 +256,8 @@ export default function WalletHomePage() {
     if (user?.address && userData?._id) {
       loadRecentPeople();
     }
-  }, [user?.address, userData?._id]);
+    loadBalances();
+  }, [user?.address, userData?._id, client, account?.address]);
 
   return (
     <View style={styles.container}>
@@ -217,6 +266,9 @@ export default function WalletHomePage() {
         style={styles.topSectionContainer}
         resizeMode="cover"
       >
+        {/* Add this overlay view */}
+        <View style={styles.overlay} />
+
         <View style={styles.searchHeader}>
           <TouchableOpacity
             style={styles.searchBar}
@@ -236,7 +288,29 @@ export default function WalletHomePage() {
             </Text>
           </TouchableOpacity>
         </View>
+
+        {/* Add the balance display section here */}
+        <View style={styles.balanceContainer}>
+          <View style={styles.balanceRow}>
+            <Image
+              source={require("../../../assets/images/token/usdc.png")}
+              style={styles.usdcIcon}
+            />
+            {balances.isLoading ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <Text style={styles.balanceAmount}>
+                {displayBalance.whole}
+                <Text style={styles.balanceDecimal}>
+                  .{displayBalance.decimal}
+                </Text>
+              </Text>
+            )}
+          </View>
+        </View>
+
       </ImageBackground>
+
 
       {/* Updated action grid layout */}
       <View style={styles.actionGrid}>
@@ -268,6 +342,28 @@ export default function WalletHomePage() {
           <Text style={styles.actionText}>Pay{"\n"}anyone</Text>
         </View>
 
+      {/* Add a new item for the balance */}
+        {/* <View style={styles.actionItemContainer}>
+          <TouchableOpacity style={styles.actionIconButton}>
+            <Image
+              source={require("../../../assets/images/token/usdc.png")}
+              style={styles.usdcIcon}
+            />
+          </TouchableOpacity>
+          <Text style={styles.actionText}>
+            {balances.isLoading ? (
+              <ActivityIndicator size="small" color="#1565C0" />
+            ) : (
+              <Text style={styles.balanceGridText}>
+                <Text>{displayBalance.whole}</Text>
+                <Text style={styles.balanceGridDecimal}>
+                  .{displayBalance.decimal}
+                </Text>
+              </Text>
+            )}
+          </Text>
+        </View> */}
+
         <View style={styles.actionItemContainer}>
           <TouchableOpacity style={styles.actionIconButton}>
             <MaterialCommunityIcons name="bank" size={28} color="#1565C0" />
@@ -286,6 +382,30 @@ export default function WalletHomePage() {
           <Text style={styles.actionText}>Earn{"\n"}rewards</Text>
         </View>
       </View>
+
+       {/* Center the balance display below the action grid */}
+    {/* <View style={styles.balanceContainerCentered}>
+      <Text style={styles.balanceLabel}>Your balance</Text>
+      <View style={styles.balanceDisplay}>
+        <Image
+          source={require("../../../assets/images/token/usdc.png")}
+          style={styles.usdcIconLarge}
+        />
+        {balances.isLoading ? (
+          <ActivityIndicator size="small" color="#1565C0" />
+        ) : (
+          <Text style={styles.balanceTextLarge}>
+            <Text style={styles.balanceAmountLarge}>
+              {displayBalance.whole}
+            </Text>
+            <Text style={styles.balanceDecimalLarge}>
+              .{displayBalance.decimal}
+            </Text>
+          </Text>
+        )}
+      </View>
+    </View> */}
+
 
       {/* people */}
       <ProfileIconSection
@@ -322,6 +442,40 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     height: 250,
   },
+  overlay: {
+    ...StyleSheet.absoluteFillObject, 
+    backgroundColor: 'rgba(0, 0, 0, 0.4)', 
+  },
+
+  // inside image
+  balanceContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: "45%",
+    justifyContent: 'center',
+    alignItems: 'center', 
+  },
+  balanceRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
+  usdcIcon: {
+    width: 25,
+    height: 25,
+  },
+  balanceAmount: {
+    fontSize: 45,
+    fontWeight: "bold",
+    color: "#fff", 
+  },
+  balanceDecimal: {
+    fontSize: 28,
+    color: "#e0e0e0", 
+  },
+  // inside image
+
   searchHeader: {
     flexDirection: "row",
     alignItems: "center",
@@ -359,14 +513,16 @@ const styles = StyleSheet.create({
   },
   actionGrid: {
     flexDirection: "row",
-    justifyContent: "space-around",
+    justifyContent: "space-between",
     marginTop: 20,
     marginBottom: 20,
     paddingHorizontal: 10,
+    gap: 15,
   },
   actionItemContainer: {
     alignItems: "center",
-    width: "23%",
+    // width: "23%",
+    // marginBottom: 10,
   },
   actionIconButton: {
     backgroundColor: "rgba(13, 71, 247, 0.2)",

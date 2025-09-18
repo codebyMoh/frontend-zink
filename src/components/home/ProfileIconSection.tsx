@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
   },
   sectionHeader: {
     fontSize: 22,
-    fontWeight: "bold",
+    fontWeight: "medium",
     color: "#000",
     marginHorizontal: 20,
     marginBottom: 15,
@@ -135,8 +135,8 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   personAvatar: {
-    width: 60,
-    height: 60,
+    width: 50,
+    height: 50,
     borderRadius: 30,
     justifyContent: "center",
     alignItems: "center",
@@ -149,8 +149,8 @@ const styles = StyleSheet.create({
   },
   personAvatarText: {
     color: "#fff",
-    fontSize: 24,
-    fontWeight: "bold",
+    fontSize: 25,
+    // fontWeight: "semi-bold",
   },
   personName: {
     fontSize: 14,
