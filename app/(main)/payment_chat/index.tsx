@@ -90,19 +90,12 @@ export default function PaymentChatScreen() {
         recipientId: recipientuser?._id,
         recipientName: recipientuser?.userName,
         recipientAddress: recipientuser?.smartWalletAddress,
+        amount: 0,
       },
     });
   };
 
-  const handleRequestPress = () => {
-    router.push({
-      pathname: "/request_payment",
-      params: {
-        userId: currentUser?._id,
-        userName: currentUser?.userName,
-      },
-    });
-  };
+  const handleRequestPress = () => {};
 
   const getFormattedDate = (dateString: string) => {
     const date = new Date(dateString);

@@ -16,6 +16,7 @@ import {
   Image,
   Modal,
   TextInput,
+  Alert,
 } from "react-native";
 import QRCodeSvg from "react-native-qrcode-svg";
 import Toast from "react-native-toast-message";
@@ -54,6 +55,7 @@ export default function ShareQRCodeScreen() {
   // TODO: add this in env
   const BASE_USDC = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
 
+  // load balance
   const loadBalances = async () => {
     if (!client || !account?.address) return;
 
@@ -83,6 +85,7 @@ export default function ShareQRCodeScreen() {
     }
   };
 
+  // formate balance for display
   const formatBalanceForDisplay = (balance: string) => {
     const [whole, decimal] = balance.split(".");
     return {
@@ -92,12 +95,31 @@ export default function ShareQRCodeScreen() {
   };
 
   const displayBalance = formatBalanceForDisplay(balances.usdc);
+  // handle set amount
+  function handleSetAmount() {
+    if (!actualUserName || !userId) {
+      Toast.show({
+        type: "error",
+        text1: "Set amount",
+        text2: "userid or username not found.",
+      });
+      return;
+    }
+    router.push({
+      pathname: "/request_payment",
+      params: {
+        userId: userId,
+        userName: actualUserName,
+      },
+    });
+  }
 
+  // get userdata
   const getUserData = async () => {
     const userData = await TokenManager.getUserData();
     if (userData?._id) {
       setUserId(userData?._id || null);
-      setActualUserName(userData?.userName || "")
+      setActualUserName(userData?.userName || "");
       setPaymentId(userData?.paymentId || "");
       setIsPaymentIdEdited(userData?.isPaymentIdEdited || false);
     }
@@ -204,100 +226,115 @@ export default function ShareQRCodeScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <TouchableOpacity style={styles.backButton}>
-        <AntDesign
-          name="arrowleft"
-          size={28}
-          color="black"
-          onPress={() => router.back()}
-        />
-        {isDownloading ? (
-          <ActivityIndicator size={24} color="black" />
-        ) : (
-          <Octicons
-            onPress={handleDownloadQR}
-            name="download"
-            size={24}
+      {/* Header with back and download buttons */}
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton}>
+          <AntDesign
+            name="arrowleft"
+            size={28}
             color="black"
+            onPress={() => router.back()}
           />
-        )}
-      </TouchableOpacity>
-      <ViewShot ref={viewShotRef} options={{ format: "png", quality: 1 }}>
-        <View style={styles.card}>
-          <View style={styles.profileSection}>
-            <View style={styles.profileInitialCircle}>
-              <Text style={styles.profileInitialText}>
-                {actualUserName?.charAt(0)?.toUpperCase() || "Z"}
+        </TouchableOpacity>
+        <TouchableOpacity onPress={handleDownloadQR}>
+          {isDownloading ? (
+            <ActivityIndicator size={24} color="black" />
+          ) : (
+            <Octicons name="download" size={24} color="black" />
+          )}
+        </TouchableOpacity>
+      </View>
+
+      {/* Main Card for Display - Contains all interactive elements */}
+      <View style={styles.card}>
+        {/* Content to be shared - Wrapped in ViewShot */}
+        <ViewShot ref={viewShotRef} options={{ format: "png", quality: 1 }}>
+          <View style={styles.shareableCardContent}>
+            {" "}
+            {/* New style for the shareable portion */}
+            <View style={styles.profileSection}>
+              <View style={styles.profileInitialCircle}>
+                <Text style={styles.profileInitialText}>
+                  {actualUserName?.charAt(0)?.toUpperCase() || "Z"}
+                </Text>
+              </View>
+              <Text style={styles.profileName}>
+                {actualUserName || "Your Name"}
               </Text>
             </View>
-            <Text style={styles.profileName}>
-              {actualUserName || "Your Name"}
-            </Text>
-          </View>
-
-          <View style={styles.qrCodeWrapper}>
-            <View style={styles.qrContainer}>
-              {userId && (
-                <QRCodeSvg
-                  value={userId}
-                  size={220}
-                  color="black"
-                  backgroundColor="white"
-                  logo={require("../../../assets/images/logos/Zink-Qr-Logo.png")}
-                  logoSize={50}
-                  logoBackgroundColor="white"
-                  logoBorderRadius={25}
-                />
-              )}
-            </View>
-            <Text style={styles.scanInstructionText}>
-              Scan to pay with any ZINK app
-            </Text>
-          </View>
-
-          <View style={styles.paymentIdDetails}>
-            <Text style={styles.paymentIdLabel}>Payment ID:</Text>
-            <Text style={styles.paymentIdText}>{paymentId}</Text>
-            <TouchableOpacity
-              onPress={handleCopyPaymentId}
-              style={styles.actionButton}
-            >
-              <MaterialCommunityIcons
-                name="content-copy"
-                size={20}
-                color="#666"
-              />
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={handleEditPaymentId}
-              style={styles.actionButton}
-            >
-              <MaterialCommunityIcons name="pencil" size={20} color="#666" />
-            </TouchableOpacity>
-          </View>
-
-          {/* Balance Display */}
-          <View style={styles.balanceDisplayContainer}>
-            <View style={styles.balanceDisplay}>
-              <Image
-                source={require("../../../assets/images/token/usdc.png")}
-                style={styles.usdcIcon}
-              />
-              {balances.isLoading ? (
-                <ActivityIndicator color="#2E7D32" size="large" />
-              ) : (
-                <Text style={styles.balanceAmount}>
-                  {displayBalance.whole}
-                  <Text style={styles.balanceDecimal}>
-                    .{displayBalance.decimal}
-                  </Text>
-                </Text>
-              )}
+            <View style={styles.qrCodeWrapper}>
+              <View style={styles.qrContainer}>
+                {userId && (
+                  <QRCodeSvg
+                    value={JSON.stringify({ userId: userId })}
+                    size={220}
+                    color="black"
+                    backgroundColor="white"
+                    logo={require("../../../assets/images/logos/Zink-Qr-Logo.png")}
+                    logoSize={50}
+                    logoBackgroundColor="white"
+                    logoBorderRadius={25}
+                  />
+                )}
+              </View>
+              <Text style={styles.scanInstructionText}>
+                Scan to pay with any ZINK app
+              </Text>
             </View>
           </View>
+        </ViewShot>
+
+        {/* Payment ID details and Balance/Set Amount - These are NOT part of the shared image */}
+        <View style={styles.paymentIdDetails}>
+          <Text style={styles.paymentIdLabel}>Payment ID:</Text>
+          <Text style={styles.paymentIdText}>{paymentId}</Text>
+          <TouchableOpacity
+            onPress={handleCopyPaymentId}
+            style={styles.actionButton}
+          >
+            <MaterialCommunityIcons
+              name="content-copy"
+              size={20}
+              color="#666"
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={handleEditPaymentId}
+            style={styles.actionButton}
+          >
+            <MaterialCommunityIcons name="pencil" size={20} color="#666" />
+          </TouchableOpacity>
         </View>
-      </ViewShot>
+
+        <View style={styles.balanceButtonsContainer}>
+          <TouchableOpacity
+            style={[styles.balanceButton, styles.greenBackground]}
+            disabled={true}
+          >
+            <Image
+              source={require("../../../assets/images/token/usdc.png")}
+              style={styles.usdcIcon}
+            />
+            {balances.isLoading ? (
+              <ActivityIndicator color="#2E7D32" size="small" />
+            ) : (
+              <Text style={styles.balanceAmount}>
+                {displayBalance.whole}
+                <Text style={styles.balanceDecimal}>
+                  .{displayBalance.decimal}
+                </Text>
+              </Text>
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.balanceButton, styles.whiteBackground]}
+            onPress={() => handleSetAmount()}
+          >
+            <Text style={styles.setAmountText}>Set amount</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
       {/* Bottom Buttons */}
       <View style={styles.bottomButtons}>
         <TouchableOpacity
@@ -305,12 +342,12 @@ export default function ShareQRCodeScreen() {
           onPress={() => router.replace("/scan_qr")}
         >
           <MaterialCommunityIcons name="qrcode-scan" size={24} color="black" />
-          <Text style={styles.scannerButtonText}>Open scanner</Text>
+          <Text style={styles.scannerButtonText}>Scan</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.shareButton} onPress={handleShareQR}>
           <MaterialCommunityIcons name="share-variant" size={24} color="#fff" />
-          <Text style={styles.shareButtonText}>Share QR code</Text>
+          <Text style={styles.shareButtonText}>Share</Text>
         </TouchableOpacity>
       </View>
 
@@ -371,51 +408,61 @@ const styles = StyleSheet.create({
     padding: 20,
     justifyContent: "space-between",
   },
-  backButton: {
-    paddingHorizontal: 10,
-    display: "flex",
+  header: {
     flexDirection: "row",
-    alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 15,
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  backButton: {
+    paddingRight: 15,
   },
   card: {
-    backgroundColor: "#f9f9f9",
-    borderRadius: 16,
+    backgroundColor: "#fff",
+    borderRadius: 20,
     alignItems: "center",
-    padding: 20,
+    padding: 25,
     shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: 3 },
-    shadowRadius: 5,
-    elevation: 3,
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 10 },
+    shadowRadius: 15,
+    elevation: 5,
     width: "100%",
+    minHeight: 500,
+  },
+  // New style for the content that is specifically for sharing
+  shareableCardContent: {
+    backgroundColor: "white", // Explicitly set white background for sharing
+    borderRadius: 20,
+    alignItems: "center",
+    padding: 15,
+    width: "100%",
+    // Remove shadow and elevation here as they are on the parent `card` for overall app display
   },
   profileSection: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 20,
-    width: "100%",
-    justifyContent: "center",
+    marginBottom: 30,
+    marginTop: 10,
   },
   profileInitialCircle: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: "#9e9e9e",
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: "#e0e0e0",
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 10,
+    marginRight: 15,
   },
   profileInitialText: {
-    color: "#fff",
-    fontSize: 24,
+    color: "#4a4a4a",
+    fontSize: 28,
     fontWeight: "bold",
   },
   profileName: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: "bold",
-    color: "#000",
+    color: "#333",
   },
   qrCodeWrapper: {
     alignItems: "center",
@@ -423,99 +470,123 @@ const styles = StyleSheet.create({
   },
   qrContainer: {
     backgroundColor: "white",
-    padding: 20,
-    borderRadius: 12,
+    padding: 15,
+    borderRadius: 15,
+    marginBottom: 10,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowOffset: { width: 0, height: 5 },
+    shadowRadius: 5,
+    elevation: 2,
   },
   scanInstructionText: {
     fontSize: 14,
-    color: "#555",
-    marginTop: 10,
+    color: "#777",
     textAlign: "center",
   },
   paymentIdDetails: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    paddingVertical: 10,
     marginBottom: 20,
     width: "100%",
   },
   paymentIdLabel: {
     fontSize: 14,
-    color: "#555",
+    color: "#888",
     marginRight: 5,
   },
   paymentIdText: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#000",
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#444",
   },
   actionButton: {
-    padding: 5,
+    padding: 8,
     marginLeft: 5,
   },
-  balanceDisplayContainer: {
-    marginTop: 10,
+  balanceButtonsContainer: {
+    width: "100%",
     alignItems: "center",
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    backgroundColor: "#E8F5E8",
-    borderRadius: 10,
-    width: "90%",
+    marginBottom: 20,
   },
-  balanceDisplay: {
+  balanceButton: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 15,
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    width: "90%",
+    marginBottom: 10,
+  },
+  greenBackground: {
+    backgroundColor: "#e4ecf7ff",
+  },
+  whiteBackground: {
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
   },
   usdcIcon: {
-    width: 20,
-    height: 20,
-    marginRight: 6,
+    width: 24,
+    height: 24,
+    marginRight: 8,
+  },
+  setAmountText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#4a4a4a",
   },
   balanceAmount: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: "bold",
-    color: "#2E7D32",
+    color: "#1A73E8",
   },
   balanceDecimal: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "bold",
-    color: "#2E7D32",
+    color: "#1A73E8",
   },
   bottomButtons: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginTop: 20,
+    paddingHorizontal: 10,
   },
   shareButton: {
-    width: "48%",
+    flex: 1,
     flexDirection: "row",
-    gap: 3,
+    gap: 8,
     justifyContent: "center",
-    backgroundColor: "#5abb5eff",
+    backgroundColor: "#1A73E8",
     borderRadius: 30,
-    padding: 15,
+    padding: 18,
     alignItems: "center",
+    marginLeft: 10,
   },
   shareButtonText: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: "600",
     color: "#fff",
   },
   scannerButton: {
-    width: "48%",
+    flex: 1,
     flexDirection: "row",
-    gap: 5,
+    gap: 8,
     justifyContent: "center",
-    borderColor: "#f0f0f0",
-    borderWidth: 3,
+    borderColor: "#e0e0e0",
+    borderWidth: 2,
     borderRadius: 30,
-    padding: 15,
+    padding: 18,
     alignItems: "center",
+    marginRight: 10,
   },
   scannerButtonText: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: "600",
-    color: "#000",
+    color: "#333",
   },
   modalOverlay: {
     flex: 1,
@@ -526,22 +597,23 @@ const styles = StyleSheet.create({
   modalContent: {
     backgroundColor: "white",
     borderRadius: 20,
-    padding: 20,
+    padding: 25,
     width: "90%",
     maxWidth: 400,
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "bold",
     textAlign: "center",
     marginBottom: 20,
+    color: "#333",
   },
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 10,
+    borderColor: "#e0e0e0",
+    borderRadius: 12,
     paddingHorizontal: 15,
     marginBottom: 10,
   },
@@ -552,12 +624,12 @@ const styles = StyleSheet.create({
   },
   zinkSuffix: {
     fontSize: 16,
-    color: "#666",
+    color: "#999",
     paddingLeft: 5,
   },
   modalNote: {
     fontSize: 12,
-    color: "#666",
+    color: "#888",
     textAlign: "center",
     marginBottom: 20,
   },
@@ -569,17 +641,17 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 15,
     marginRight: 10,
-    borderRadius: 10,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: "#e0e0e0",
     alignItems: "center",
   },
   saveButton: {
     flex: 1,
     paddingVertical: 15,
     marginLeft: 10,
-    borderRadius: 10,
-    backgroundColor: "#5abb5eff",
+    borderRadius: 12,
+    backgroundColor: "#5abb5e",
     alignItems: "center",
   },
   cancelButtonText: {

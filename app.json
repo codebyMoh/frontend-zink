@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "account-kit-expo-quickstart",
-    "slug": "account-kit-expo-quickstart",
+    "name": "Zink",
+    "slug": "Zink",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "account-kit-expo-quickstart",
+    "scheme": "Zink",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
@@ -26,14 +26,14 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.alchemy.accountkitexpoquickstart"
+      "bundleIdentifier": "com.zink.app"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/logos/Zink-Qr-Logo.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.alchemy.accountkitexpoquickstart"
+      "package": "com.zink.app"
     },
     "web": {
       "bundler": "metro",

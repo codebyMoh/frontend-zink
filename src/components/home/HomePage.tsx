@@ -516,7 +516,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginTop: 20,
     marginBottom: 20,
-    paddingHorizontal: 10,
+    paddingHorizontal: 20,
     gap: 15,
   },
   actionItemContainer: {

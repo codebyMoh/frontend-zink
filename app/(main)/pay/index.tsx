@@ -33,6 +33,7 @@ export default function PaymentScreen() {
   const params = useLocalSearchParams();
   const recipientAddress = params.recipientAddress as string;
   const recipient = params.recipientName as string;
+  const amountFromParam = params?.amount as string;
 
   async function payHandler() {
     try {
@@ -75,6 +76,11 @@ export default function PaymentScreen() {
     const randomIndex = Math.floor(Math.random() * colors.length);
     setAvatarColor(colors[randomIndex]);
   }, []);
+  useEffect(() => {
+    if (Number(amountFromParam) > 0) {
+      setAmount(amountFromParam);
+    }
+  }, [amountFromParam]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -114,6 +120,7 @@ export default function PaymentScreen() {
               keyboardType="numeric"
               value={amount}
               onChangeText={setAmount}
+              editable={Number(amountFromParam) > 0 ? false : true}
             />
             <Text style={styles.currency}>USDC</Text>
           </View>

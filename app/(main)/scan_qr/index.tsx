@@ -23,12 +23,13 @@ export default function QrScan() {
   const [permission, requestPermission] = useCameraPermissions();
 
   const handleBarcodeScanned = async ({ data }: { data: string }) => {
-    // console.log("QR Data:", data);
+    console.log("QR Data:dsdsdsdsd", JSON.parse(data));
     if (scanned) return;
     setScanned(true);
 
     try {
-      const userId = data.trim();
+      const parseData = JSON.parse(data);
+      const userId = parseData?.userId?.trim();
 
       const response = await scanUserById(userId);
 
@@ -39,7 +40,7 @@ export default function QrScan() {
           recipientAddress: user.smartWalletAddress,
           recipientId: user._id,
           recipientName: user.userName,
-          recipientUsername: user.userName,
+          amount: Number(parseData?.amount) > 0 ? parseData?.amount : 0,
         },
       });
     } catch (error) {
@@ -225,8 +226,8 @@ const styles = StyleSheet.create({
     borderTopWidth: 6,
     borderLeftWidth: 6,
     borderTopLeftRadius: 12,
-    borderTopColor: "#7CFC00",
-    borderLeftColor: "#7CFC00",
+    borderTopColor: "#1A73E8",
+    borderLeftColor: "#1A73E8",
   },
   cornerTR: {
     top: -6,
@@ -234,8 +235,8 @@ const styles = StyleSheet.create({
     borderTopWidth: 6,
     borderRightWidth: 6,
     borderTopRightRadius: 12,
-    borderTopColor: "#7CFC00",
-    borderRightColor: "#7CFC00",
+    borderTopColor: "#1A73E8",
+    borderRightColor: "#1A73E8",
   },
   cornerBL: {
     bottom: -6,
@@ -243,8 +244,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 6,
     borderLeftWidth: 6,
     borderBottomLeftRadius: 12,
-    borderBottomColor: "#7CFC00",
-    borderLeftColor: "#7CFC00",
+    borderBottomColor: "#1A73E8",
+    borderLeftColor: "#1A73E8",
   },
   cornerBR: {
     bottom: -6,
@@ -252,8 +253,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 6,
     borderRightWidth: 6,
     borderBottomRightRadius: 12,
-    borderBottomColor: "#7CFC00",
-    borderRightColor: "#7CFC00",
+    borderBottomColor: "#1A73E8",
+    borderRightColor: "#1A73E8",
   },
 
   uploadBtn: {
