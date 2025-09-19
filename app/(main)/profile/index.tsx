@@ -23,23 +23,23 @@ import Toast from "react-native-toast-message";
 import * as Clipboard from 'expo-clipboard';
 
 export default function ProfileScreen() {
-  const user = useUser()
+  const user = useUser();
   const { logout } = useLogout();
 
-const [userName, setUserName] = useState("Jhone Doe"); // fallback name
+  const [userName, setUserName] = useState("Jhone Doe"); // fallback name
 
-useEffect(() => {
-  const loadUserData = async () => {
-    const userData = await TokenManager.getUserData();
-    if (userData?.userName) {
-      setUserName(userData.userName);
-    }
-  };
-  loadUserData();
-}, []);
+  useEffect(() => {
+    const loadUserData = async () => {
+      const userData = await TokenManager.getUserData();
+      if (userData?.userName) {
+        setUserName(userData.userName);
+      }
+    };
+    loadUserData();
+  }, []);
 
   async function logoutHandler() {
-    await TokenManager.clearAll()
+    await TokenManager.clearAll();
     await AsyncStorage.clear();
     await logout();
     router.dismissAll();
@@ -47,170 +47,148 @@ useEffect(() => {
   }
 
   const handleCopyUsername = async () => {
-  try {
-    await Clipboard.setStringAsync(userName);
-    Toast.show({
-      type: "success",
-      text1: "Copied!",
-      text2: "Username copied to clipboard",
-    });
-  } catch (error) {
-    console.log("Error copying username:", error);
-  }
-};
+    try {
+      await Clipboard.setStringAsync(userName);
+      Toast.show({
+        type: "success",
+        text1: "Copied!",
+        text2: "Username copied to clipboard",
+      });
+    } catch (error) {
+      console.log("Error copying username:", error);
+    }
+  };
 
   return (
     <>
-    <ScrollView style={styles.container}>
-      <View>
-        <ImageBackground
-          source={require("../../../assets/images/profile/city-2.jpg")}
-          style={styles.header}
-          imageStyle={{
-            borderBottomLeftRadius: 20,
-            borderBottomRightRadius: 20,
-          }}
-        >
-          <View style={styles.headerContent}>
-            <View>
-              <View style={styles.nameContainer}>
-                <Text style={styles.name}>{userName}</Text>
-                <TouchableOpacity onPress={handleCopyUsername} style={styles.copyButton}>
-                  <MaterialCommunityIcons name="content-copy" size={18} color="#000" />
+      <ScrollView style={styles.container}>
+        <View>
+          <ImageBackground
+            source={require("../../../assets/images/profile/city-2.jpg")}
+            style={styles.header}
+            imageStyle={{
+              borderBottomLeftRadius: 20,
+              borderBottomRightRadius: 20,
+            }}
+          >
+            <View style={styles.overlay}> 
+              <View style={styles.headerContent}>
+                <View>
+                  <View style={styles.nameContainer}>
+                    <Text style={styles.name}>{userName}</Text>
+                    <TouchableOpacity onPress={handleCopyUsername} style={styles.copyButton}>
+                      <MaterialCommunityIcons name="content-copy" size={18} color="#fff" />
+                    </TouchableOpacity>
+                  </View>
+                  <Text style={styles.subText}>Email ID: {user?.email}</Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.avatarContainer}
+                  activeOpacity={0.8}
+                  onPress={() => router.push("/share_qr")} // testing
+                >
+                  <View style={styles.avatar}>
+                    <Text style={styles.avatarText}>
+                      {userName?.charAt(0)?.toUpperCase()}
+                    </Text>
+                  </View>
+
+                  {/* QR Code Icon */}
+                  <View style={styles.qrBadge}>
+                    <AntDesign name="qrcode" size={20} color="#333" />
+                  </View>
                 </TouchableOpacity>
               </View>
-              <Text style={styles.subText}>Email ID: {user?.email}</Text>
             </View>
-            <TouchableOpacity
-              style={styles.avatarContainer}
-              activeOpacity={0.8}
-              onPress={() => router.push("/share_qr")} // testing
-            >
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>
-                  {userName?.charAt(0)?.toUpperCase()}
-                </Text>
-              </View>
+          </ImageBackground>
+        </View>
 
-              {/* QR Code Icon */}
-              <View style={styles.qrBadge}>
-                <AntDesign name="qrcode" size={20} color="#333" />
-              </View>
-            </TouchableOpacity>
-          </View>
-        </ImageBackground>
-      </View>
+        {/* Content */}
+        <View style={styles.content}>
+          {/* Pay with card */}
+          <TouchableOpacity style={styles.option}>
+            <Ionicons name="card" size={24} color="#1565C0" />
+            <View>
+              <Text style={styles.optionText}>
+                Pay with credit or debit cards
+              </Text>
+              <Text style={styles.smallText}>Pay bills with your cards</Text>
+            </View>
+          </TouchableOpacity>
 
-      {/* Content */}
-      <View style={styles.content}>
-        {/* Pay with card */}
-        <TouchableOpacity style={styles.option}>
-          <Ionicons name="card" size={24} color="#1565C0" />
-          <View>
-            <Text style={styles.optionText}>
-              Pay with credit or debit cards
-            </Text>
-            <Text style={styles.smallText}>Pay bills with your cards</Text>
-          </View>
-        </TouchableOpacity>
+          {/* QR Code */}
+          <TouchableOpacity style={styles.option} onPress={() => router.push("/share_qr")}>
+            <AntDesign name="qrcode" size={24} color="#1565C0" />
+            <View>
+              <Text style={styles.optionText}>Your QR code</Text>
+              <Text style={styles.smallText}>
+                Use to receive money from ZINK
+              </Text>
+            </View>
+          </TouchableOpacity>
 
-        {/* QR Code */}
-        <TouchableOpacity style={styles.option} onPress={()=>router.push("/share_qr")} >
-          <AntDesign name="qrcode" size={24} color="#1565C0" />
-          <View>
-            <Text style={styles.optionText}>Your QR code</Text>
-            <Text style={styles.smallText}>
-              Use to receive money from ZINK
-            </Text>
-          </View>
-        </TouchableOpacity>
+          {/* Autopay */}
+          <TouchableOpacity style={styles.option}>
+            <MaterialCommunityIcons
+              name="refresh-auto"
+              size={24}
+              color="#1565C0"
+            />
+            <View>
+              <Text style={styles.optionText}>Autopay</Text>
+              <Text style={styles.smallText}>No pending requests</Text>
+            </View>
+          </TouchableOpacity>
 
-        {/* Your Payment ID */}
-        {/* <TouchableOpacity style={styles.option}>
-          <MaterialIcons name="account-balance-wallet" size={24} color="#1565C0" />
-          <View>
-            <Text style={styles.optionText}>Your Payment ID</Text>
-            <Text style={styles.smallText}>
-              Share your unique payment identifier
-            </Text>
-          </View>
-        </TouchableOpacity> */}
+          {/* Settings */}
+          <TouchableOpacity style={styles.option}>
+            <Ionicons name="settings-outline" size={24} color="#1565C0" />
+            <Text style={styles.optionText}>Settings</Text>
+          </TouchableOpacity>
 
-        {/* Autopay */}
-        <TouchableOpacity style={styles.option}>
-          <MaterialCommunityIcons
-            name="refresh-auto"
-            size={24}
-            color="#1565C0"
-          />
-          <View>
-            <Text style={styles.optionText}>Autopay</Text>
-            <Text style={styles.smallText}>No pending requests</Text>
-          </View>
-        </TouchableOpacity>
+          {/* Manage Google Account */}
+          <TouchableOpacity style={styles.option}>
+            <FontAwesome6 name="user-circle" size={24} color="#1565C0" />
+            <Text style={styles.optionText}>Manage Google account</Text>
+          </TouchableOpacity>
 
+          {/* Get help */}
+          <TouchableOpacity style={styles.option}>
+            <Feather name="help-circle" size={24} color="#1565C0" />
+            <Text style={styles.optionText}>Get help</Text>
+          </TouchableOpacity>
 
-        {/* UPI Circle */}
-        {/* <TouchableOpacity style={styles.option}>
-          <MaterialIcons name="wifi-tethering" size={24} color="#1565C0" />
-          <View>
-            <Text style={styles.optionText}>UPI Circle</Text>
-            <Text style={styles.smallText}>
-              Help people you trust make UPI payments
-            </Text>
-          </View>
-        </TouchableOpacity> */}
+          <TouchableOpacity style={styles.option}>
+            <Fontisto name="world-o" size={24} color="#1565C0" />
+            <Text style={styles.optionText}>Language</Text>
+          </TouchableOpacity>
+          {/* Divider */}
+          <View style={styles.divider} />
 
-        {/* Settings */}
-        <TouchableOpacity style={styles.option}>
-          <Ionicons name="settings-outline" size={24} color="#1565C0" />
-          <Text style={styles.optionText}>Settings</Text>
-        </TouchableOpacity>
-
-        {/* Manage Google Account */}
-        <TouchableOpacity style={styles.option}>
-          <FontAwesome6 name="user-circle" size={24} color="#1565C0" />
-          <Text style={styles.optionText}>Manage Google account</Text>
-        </TouchableOpacity>
-
-        {/* Get help */}
-        <TouchableOpacity style={styles.option}>
-          <Feather name="help-circle" size={24} color="#1565C0" />
-          <Text style={styles.optionText}>Get help</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.option}>
-          <Fontisto name="world-o" size={24} color="#1565C0" />
-          <Text style={styles.optionText}>Language</Text>
-        </TouchableOpacity>
-        {/* Divider */}
-        <View style={styles.divider} />
-
-        {/* Logout */}
-        <TouchableOpacity
-          style={styles.logoutOption}
-          onPress={() => logoutHandler()}
-        >
-          <Ionicons name="log-out-outline" size={24} color="#E53935" />
-          <Text style={styles.logoutText}>Logout</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
-    <Toast />
+          {/* Logout */}
+          <TouchableOpacity
+            style={styles.logoutOption}
+            onPress={() => logoutHandler()}
+          >
+            <Ionicons name="log-out-outline" size={24} color="#E53935" />
+            <Text style={styles.logoutText}>Logout</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+      <Toast />
     </>
-
   );
 }
 
 const styles = StyleSheet.create({
   nameContainer: {
-  flexDirection: "row",
-  alignItems: "center",
-  gap: 8,
-},
-copyButton: {
-  padding: 4,
-},
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  copyButton: {
+    padding: 4,
+  },
   container: {
     flex: 1,
     backgroundColor: "#fff",
@@ -222,13 +200,18 @@ copyButton: {
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
   },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    justifyContent: 'flex-end',
+    padding: 20,
+  },
   headerContent: {
-    // height: 250,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginTop: "45%",
-    // backgroundColor: "rgba(0,0,0,0.3)",
   },
   avatar: {
     width: 70,
@@ -261,11 +244,11 @@ copyButton: {
   name: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#000000",
+    color: "#ffffff",
   },
   subText: {
     fontSize: 14,
-    color: "#000000",
+    color: "#ffffff",
     marginTop: 2,
   },
   content: {
@@ -294,7 +277,7 @@ copyButton: {
     height: 1,
     backgroundColor: "#ddd",
     marginVertical: 10,
-  },
+  },  
   logoutOption: {
     flexDirection: "row",
     alignItems: "center",
