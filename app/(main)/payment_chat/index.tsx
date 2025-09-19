@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import {
   ApiTransaction,
   getTransactionsForTwoUsers,
@@ -6,7 +7,7 @@ import {
 import { TokenManager } from "@/services/tokenManager";
 import { AntDesign, FontAwesome, MaterialIcons } from "@expo/vector-icons";
 import { Stack, router, useLocalSearchParams } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   Platform,
   SafeAreaView,
@@ -16,13 +17,16 @@ import {
   TouchableOpacity,
   View,
   Image,
+  ActivityIndicator,
 } from "react-native";
 import UsdcIcon from "../../../assets/images/token/usdc.png";
+import { isMoreThanOneHourAgo } from "@/utils/constant";
 
 export default function PaymentChatScreen() {
   const params = useLocalSearchParams();
   const recipientName = (params.recipientName as string) || "Lacey Turner";
   const recipientId = (params.recipientId as string) || "";
+  const scrollViewRef = useRef<ScrollView>(null);
 
   const [transactions, setTransactions] = useState<ApiTransaction[]>([]);
   const [recipientuser, setRecipientuser] = useState<recipientuser>();
@@ -47,6 +51,18 @@ export default function PaymentChatScreen() {
       loadTransactions();
     }
   }, [recipientId]);
+
+  useEffect(() => {
+    if (!isLoading) {
+      setTimeout(() => {
+        scrollToBottom();
+      }, 100);
+    }
+  }, [transactions, isLoading]);
+
+  const scrollToBottom = () => {
+    scrollViewRef.current?.scrollToEnd({ animated: false });
+  };
 
   const loadTransactions = async () => {
     try {
@@ -106,6 +122,19 @@ export default function PaymentChatScreen() {
     return date.toLocaleDateString("en-US", options);
   };
 
+  //  handler pay request
+  function payRequestHandler(transaction: ApiTransaction) {
+    router.push({
+      pathname: "/pay",
+      params: {
+        recipientId: recipientuser?._id,
+        recipientName: recipientuser?.userName,
+        recipientAddress: recipientuser?.smartWalletAddress,
+        amount: transaction?.amount,
+      },
+    });
+  }
+
   const renderTransaction = (transaction: ApiTransaction) => {
     if (!currentUser) return null;
 
@@ -128,57 +157,170 @@ export default function PaymentChatScreen() {
           </Text>
         </View>
 
-        {/* Transaction card */}
-        <TouchableOpacity
-          style={[
-            styles.transactionCard,
-            transactionType === "sent" ? styles.sentCard : styles.receivedCard,
-          ]}
-          onPress={() => {
-            router.push({
-              pathname: "/transaction_details",
-              params: {
-                amount: transaction.amount,
-                currency: transaction.currency,
-                recipient: transaction.recipientUserName,
-                transactionHash: transaction.tx,
-                date: transaction.createdAt,
-                transactionType:
-                  transactionType === "sent" ? "send" : "receive",
-              },
-            });
-          }}
-        >
-          <Text style={styles.transactionTitle}>
-            {transactionType === "sent"
-              ? `Payment to ${recipientName}`
-              : "Payment to you"}
-          </Text>
-
-          {transaction.message && (
-            <Text style={styles.transactionDescription}>
-              {transaction.message}
+        {/* original transaction */}
+        {transaction?.type === "tx" && (
+          <TouchableOpacity
+            style={[
+              styles.transactionCard,
+              transactionType === "sent"
+                ? styles.sentCard
+                : styles.receivedCard,
+            ]}
+            onPress={() => {
+              router.push({
+                pathname: "/transaction_details",
+                params: {
+                  amount: transaction.amount,
+                  currency: transaction.currency,
+                  recipient: transaction.recipientUserName,
+                  transactionHash: transaction.tx,
+                  date: transaction.createdAt,
+                  transactionType:
+                    transactionType === "sent" ? "send" : "receive",
+                },
+              });
+            }}
+          >
+            <Text style={styles.transactionTitle}>
+              {transactionType === "sent"
+                ? `Payment to ${recipientName}`
+                : "Payment to you"}
             </Text>
-          )}
 
-          <View style={styles.amountContainer}>
-            {transaction.currency === "USDC" && (
-              <Image source={UsdcIcon} style={styles.usdcIcon} />
+            {transaction.message && (
+              <Text style={styles.transactionDescription}>
+                {transaction.message}
+              </Text>
             )}
-            <Text style={styles.transactionAmount}>
-              {currencyDisplay}
-              {formattedAmount}
+
+            <View style={styles.amountContainer}>
+              {transaction.currency === "USDC" && (
+                <Image source={UsdcIcon} style={styles.usdcIcon} />
+              )}
+              <Text style={styles.transactionAmount}>
+                {currencyDisplay}
+                {formattedAmount}
+              </Text>
+            </View>
+
+            <TouchableOpacity
+              style={styles.transactionStatus}
+              onPress={() => {}}
+            >
+              <FontAwesome name="check-circle" size={14} color="#34C759" />
+              <Text style={styles.statusText}>
+                Paid • {getFormattedDate(transaction.createdAt)}
+              </Text>
+              <AntDesign name="right" size={14} color="#B0B0B0" />
+            </TouchableOpacity>
+          </TouchableOpacity>
+        )}
+
+        {/* chatting */}
+
+        {transaction?.type === "chat" && (
+          <View
+            style={[
+              styles.chatBubble,
+              transactionType === "sent"
+                ? styles.sentBubble
+                : styles.receivedBubble,
+            ]}
+          >
+            <Text style={styles.chatMessageText}>
+              {transaction.chatMessage}
             </Text>
           </View>
-
-          <TouchableOpacity style={styles.transactionStatus} onPress={() => {}}>
-            <FontAwesome name="check-circle" size={14} color="#34C759" />
-            <Text style={styles.statusText}>
-              Paid • {getFormattedDate(transaction.createdAt)}
+        )}
+        {/* payment request */}
+        {transaction?.type === "request_payment" && (
+          <TouchableOpacity
+            style={[
+              styles.transactionCard,
+              transactionType === "sent"
+                ? styles.sentCard
+                : styles.receivedCard,
+            ]}
+            onPress={() => {
+              if (transaction?.requestFullFilled) {
+                router.push({
+                  pathname: "/transaction_details",
+                  params: {
+                    amount: transaction.amount,
+                    currency: transaction.currency,
+                    recipient: transaction.recipientUserName,
+                    transactionHash: transaction.tx,
+                    date: transaction.createdAt,
+                    transactionType:
+                      transactionType === "sent" ? "send" : "receive",
+                  },
+                });
+              }
+            }}
+          >
+            <Text style={styles.transactionTitle}>
+              {transactionType === "sent"
+                ? `Request from you.`
+                : `Request from ${recipientName}.`}
             </Text>
-            <AntDesign name="right" size={14} color="#B0B0B0" />
+
+            {transaction.message && (
+              <Text style={styles.transactionDescription}>
+                {transaction.message}
+              </Text>
+            )}
+
+            <View style={styles.amountContainer}>
+              {transaction.currency === "USDC" && (
+                <Image source={UsdcIcon} style={styles.usdcIcon} />
+              )}
+              <Text style={styles.transactionAmount}>
+                {currencyDisplay}
+                {formattedAmount}
+              </Text>
+            </View>
+            <View style={styles.transactionStatus}>
+              {isMoreThanOneHourAgo(transaction?.createdAt) &&
+              !transaction?.requestFullFilled ? (
+                <>
+                  <FontAwesome name="ban" size={14} color="#757575ff" />
+                  <Text style={styles.statusText}>
+                    {"Expired"} • {getFormattedDate(transaction.createdAt)}
+                  </Text>
+                </>
+              ) : transaction?.requestFullFilled ? (
+                <>
+                  <FontAwesome name="check-circle" size={14} color="#34C759" />
+                  <Text style={styles.statusText}>
+                    {"Paid"} • {getFormattedDate(transaction.createdAt)}
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <FontAwesome name="clock-o" size={14} color="#757575ff" />
+                  <Text style={styles.statusText}>
+                    {"pending"} • {getFormattedDate(transaction.createdAt)}
+                  </Text>
+                </>
+              )}
+              <AntDesign name="right" size={14} color="#B0B0B0" />
+            </View>
+            {!isMoreThanOneHourAgo(transaction?.createdAt) &&
+              !transaction?.requestFullFilled && (
+                <View style={styles.requestButtonsContainer}>
+                  <TouchableOpacity style={styles.declineButton}>
+                    <Text style={styles.declineButtonText}>Decline</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.payButtonRequest}
+                    onPress={() => payRequestHandler(transaction)}
+                  >
+                    <Text style={styles.payButtonRequestText}>Pay</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
           </TouchableOpacity>
-        </TouchableOpacity>
+        )}
       </View>
     );
   };
@@ -253,25 +395,26 @@ export default function PaymentChatScreen() {
       {renderDropdownMenu()}
 
       {/* Transaction History */}
-      <ScrollView
-        style={styles.scrollView}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingVertical: 20 }}
-      >
-        <View style={styles.transactionContainer}>
-          {isLoading ? (
-            <View style={styles.loadingContainer}>
-              <Text style={styles.loadingText}>Loading transactions...</Text>
-            </View>
-          ) : transactions.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>No transactions yet</Text>
-            </View>
-          ) : (
-            transactions.map(renderTransaction)
-          )}
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#1A73E8" />
         </View>
-      </ScrollView>
+      ) : transactions.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>No transactions yet</Text>
+        </View>
+      ) : (
+        <ScrollView
+          ref={scrollViewRef}
+          style={styles.scrollView}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingVertical: 20 }}
+        >
+          <View style={styles.transactionContainer}>
+            {transactions.map(renderTransaction)}
+          </View>
+        </ScrollView>
+      )}
 
       {/* Bottom Action Buttons */}
       <View style={styles.bottomActions}>
@@ -295,7 +438,7 @@ export default function PaymentChatScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#EFEFEF",
+    backgroundColor: "#F3F7FA",
   },
   header: {
     flexDirection: "row",
@@ -346,8 +489,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   loadingContainer: {
-    padding: 20,
+    flex: 1,
     alignItems: "center",
+    justifyContent: "center",
   },
   loadingText: {
     fontSize: 16,
@@ -505,5 +649,66 @@ const styles = StyleSheet.create({
   menuText: {
     fontSize: 16,
     color: "#333",
+  },
+  // New Styles for Chat Bubbles
+  chatBubble: {
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 20,
+    maxWidth: "80%",
+    marginBottom: 10,
+  },
+  sentBubble: {
+    alignSelf: "flex-end",
+    backgroundColor: "#bbd5f8ff", // Blue for sent messages
+    color: "#FFFFFF",
+  },
+  receivedBubble: {
+    alignSelf: "flex-start",
+    backgroundColor: "#FFFFFF", // White for received messages
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+  },
+  chatMessageText: {
+    fontSize: 16,
+  },
+  sentMessageText: {
+    color: "#FFFFFF", // White text for sent messages
+  },
+  receivedMessageText: {
+    color: "#000000", // Black text for received messages
+  },
+  requestButtonsContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 10,
+    alignSelf: "flex-end",
+  },
+  declineButton: {
+    flex: 1,
+    backgroundColor: "#F0F0F0",
+    borderRadius: 25,
+    paddingVertical: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 8,
+  },
+  declineButtonText: {
+    color: "#000000",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  payButtonRequest: {
+    flex: 1,
+    backgroundColor: "#1A73E8",
+    borderRadius: 25,
+    paddingVertical: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  payButtonRequestText: {
+    color: "#FFF",
+    fontSize: 16,
+    fontWeight: "600",
   },
 });

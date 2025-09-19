@@ -16,6 +16,9 @@ export interface ApiTransaction {
   updatedAt: string;
   recipientUserName?: string;
   userName?: string;
+  type?: string;
+  requestFullFilled?: boolean;
+  chatMessage?: string;
   __v: number;
 }
 export interface recipientuser {
