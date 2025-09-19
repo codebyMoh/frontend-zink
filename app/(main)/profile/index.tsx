@@ -22,11 +22,27 @@ import {
 import Toast from "react-native-toast-message";
 import * as Clipboard from 'expo-clipboard';
 
+interface ProfileOptionProps {
+  icon: React.ReactNode;
+  title: string;
+  subtitle?: string;
+  onPress?: () => void;
+}
+
+const ProfileOption: React.FC<ProfileOptionProps> = ({ icon, title, subtitle, onPress }) => (
+  <TouchableOpacity style={styles.option} onPress={onPress} activeOpacity={0.7}>
+    {icon}
+    <View style={styles.optionTextContainer}>
+      <Text style={styles.optionTitle}>{title}</Text>
+      {subtitle && <Text style={styles.optionSubtitle}>{subtitle}</Text>}
+    </View>
+  </TouchableOpacity>
+);
+
 export default function ProfileScreen() {
   const user = useUser();
   const { logout } = useLogout();
-
-  const [userName, setUserName] = useState("Jhone Doe"); // fallback name
+  const [userName, setUserName] = useState("Jhone Doe");
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -71,7 +87,7 @@ export default function ProfileScreen() {
               borderBottomRightRadius: 20,
             }}
           >
-            <View style={styles.overlay}> 
+            <View style={styles.overlay}>
               <View style={styles.headerContent}>
                 <View>
                   <View style={styles.nameContainer}>
@@ -85,15 +101,13 @@ export default function ProfileScreen() {
                 <TouchableOpacity
                   style={styles.avatarContainer}
                   activeOpacity={0.8}
-                  onPress={() => router.push("/share_qr")} // testing
+                  onPress={() => router.push("/share_qr")}
                 >
                   <View style={styles.avatar}>
                     <Text style={styles.avatarText}>
                       {userName?.charAt(0)?.toUpperCase()}
                     </Text>
                   </View>
-
-                  {/* QR Code Icon */}
                   <View style={styles.qrBadge}>
                     <AntDesign name="qrcode" size={20} color="#333" />
                   </View>
@@ -103,76 +117,48 @@ export default function ProfileScreen() {
           </ImageBackground>
         </View>
 
-        {/* Content */}
         <View style={styles.content}>
-          {/* Pay with card */}
-          <TouchableOpacity style={styles.option}>
-            <Ionicons name="card" size={24} color="#1565C0" />
-            <View>
-              <Text style={styles.optionText}>
-                Pay with credit or debit cards
-              </Text>
-              <Text style={styles.smallText}>Pay bills with your cards</Text>
-            </View>
-          </TouchableOpacity>
-
-          {/* QR Code */}
-          <TouchableOpacity style={styles.option} onPress={() => router.push("/share_qr")}>
-            <AntDesign name="qrcode" size={24} color="#1565C0" />
-            <View>
-              <Text style={styles.optionText}>Your QR code</Text>
-              <Text style={styles.smallText}>
-                Use to receive money from ZINK
-              </Text>
-            </View>
-          </TouchableOpacity>
-
-          {/* Autopay */}
-          <TouchableOpacity style={styles.option}>
-            <MaterialCommunityIcons
-              name="refresh-auto"
-              size={24}
-              color="#1565C0"
+          <View style={styles.optionsGroup}>
+            <ProfileOption
+              icon={<Ionicons name="card" size={24} color="#1565C0" />}
+              title="Pay with credit or debit cards"
+              subtitle="Pay bills with your cards"
             />
-            <View>
-              <Text style={styles.optionText}>Autopay</Text>
-              <Text style={styles.smallText}>No pending requests</Text>
-            </View>
-          </TouchableOpacity>
+            <ProfileOption
+              icon={<AntDesign name="qrcode" size={24} color="#1565C0" />}
+              title="Your QR code"
+              subtitle="Use to receive money from ZINK"
+              onPress={() => router.push("/share_qr")}
+            />
+            <ProfileOption
+              icon={<MaterialCommunityIcons name="refresh-auto" size={24} color="#1565C0" />}
+              title="Autopay"
+              subtitle="No pending requests"
+            />
+            <ProfileOption
+              icon={<Ionicons name="settings-outline" size={24} color="#1565C0" />}
+              title="Settings"
+            />
+            <ProfileOption
+              icon={<FontAwesome6 name="user-circle" size={24} color="#1565C0" />}
+              title="Manage Google account"
+            />
+            <ProfileOption
+              icon={<Feather name="help-circle" size={24} color="#1565C0" />}
+              title="Get help"
+            />
+            <ProfileOption
+              icon={<Fontisto name="world-o" size={24} color="#1565C0" />}
+              title="Language"
+            />
+          </View>
 
-          {/* Settings */}
-          <TouchableOpacity style={styles.option}>
-            <Ionicons name="settings-outline" size={24} color="#1565C0" />
-            <Text style={styles.optionText}>Settings</Text>
-          </TouchableOpacity>
-
-          {/* Manage Google Account */}
-          <TouchableOpacity style={styles.option}>
-            <FontAwesome6 name="user-circle" size={24} color="#1565C0" />
-            <Text style={styles.optionText}>Manage Google account</Text>
-          </TouchableOpacity>
-
-          {/* Get help */}
-          <TouchableOpacity style={styles.option}>
-            <Feather name="help-circle" size={24} color="#1565C0" />
-            <Text style={styles.optionText}>Get help</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.option}>
-            <Fontisto name="world-o" size={24} color="#1565C0" />
-            <Text style={styles.optionText}>Language</Text>
-          </TouchableOpacity>
-          {/* Divider */}
-          <View style={styles.divider} />
-
-          {/* Logout */}
-          <TouchableOpacity
-            style={styles.logoutOption}
-            onPress={() => logoutHandler()}
-          >
-            <Ionicons name="log-out-outline" size={24} color="#E53935" />
-            <Text style={styles.logoutText}>Logout</Text>
-          </TouchableOpacity>
+          <View style={styles.logoutGroup}>
+            <TouchableOpacity style={styles.logoutOption} onPress={() => logoutHandler()}>
+              <Ionicons name="log-out-outline" size={24} color="#E53935" />
+              <Text style={styles.logoutText}>Logout</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </ScrollView>
       <Toast />
@@ -181,31 +167,20 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  nameContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  copyButton: {
-    padding: 4,
-  },
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#F0F4F7",
   },
   header: {
-    padding: 20,
-    width: "auto",
+    width: "100%",
     height: 250,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: "rgba(0,0,0,0.5)",
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
-    justifyContent: 'flex-end',
+    justifyContent: "flex-end",
     padding: 20,
   },
   headerContent: {
@@ -213,85 +188,109 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
+  nameContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  name: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#ffffff",
+  },
+  subText: {
+    fontSize: 16,
+    color: "#ffffff",
+    marginTop: 4,
+    opacity: 0.8,
+  },
+  copyButton: {
+    padding: 4,
+  },
+  avatarContainer: {
+    position: "relative",
+  },
   avatar: {
     width: 70,
     height: 70,
-    borderRadius: "100%",
+    borderRadius: 35,
     backgroundColor: "#5d4038",
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 15,
+  },
+  avatarText: {
+    fontSize: 26,
+    fontWeight: "bold",
+    color: "#fff",
   },
   qrBadge: {
     position: "absolute",
     bottom: 3,
-    right: 16,
-    boxShadow: "#000",
+    right: 0,
     backgroundColor: "#fff",
     borderRadius: 15,
-    padding: 4,
+    padding: 5,
     elevation: 3,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 2,
   },
-  avatarText: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "#fff",
-  },
-  name: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#ffffff",
-  },
-  subText: {
-    fontSize: 14,
-    color: "#ffffff",
-    marginTop: 2,
-  },
   content: {
-    marginTop: 20,
+    padding: 20,
+  },
+  optionsGroup: {
+    backgroundColor: "#fff",
+    borderRadius: 15,
     paddingHorizontal: 15,
+    paddingVertical: 10,
+    marginBottom: 20,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
   },
   option: {
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 10,
-    display: "flex",
     flexDirection: "row",
-    gap: 10,
+    alignItems: "center",
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F0F0F0",
   },
-  optionText: {
+  optionTextContainer: {
+    marginLeft: 15,
+  },
+  optionTitle: {
     fontSize: 16,
+    fontWeight: "600",
     color: "#333",
-    fontWeight: "500",
   },
-  smallText: {
+  optionSubtitle: {
     fontSize: 12,
-    color: "#666",
-    marginTop: 3,
+    color: "#888",
+    marginTop: 2,
   },
-  divider: {
-    height: 1,
-    backgroundColor: "#ddd",
-    marginVertical: 10,
-  },  
+  logoutGroup: {
+    backgroundColor: "#fff",
+    borderRadius: 15,
+    paddingHorizontal: 15,
+    marginBottom: 20,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+  },
   logoutOption: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 15,
-    marginBottom: 40,
-    borderRadius: 10,
+    paddingVertical: 15,
   },
   logoutText: {
     fontSize: 16,
     color: "#E53935",
     fontWeight: "600",
-    marginLeft: 10,
-  },
-  avatarContainer: {
-    position: "relative",
+    marginLeft: 15,
   },
 });
