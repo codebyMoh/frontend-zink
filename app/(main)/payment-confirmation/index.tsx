@@ -24,7 +24,8 @@ export default function PaymentConfirmationScreen() {
   const amount = (params.amount as string) || "0.00";
   const recipient = (params.recipient as string) || "Lance Whitney";
   const recipientAddress = params.recipientAddress as `0x${string}`;
-
+  const message = (params.message as string) || "Here's the money I owe you.";
+  // console.log("Payment message:", message);
   const [isLoading, setIsLoading] = useState(false);
   const [balances, setBalances] = useState<BalanceState>({
     eth: "0",
@@ -176,6 +177,7 @@ export default function PaymentConfirmationScreen() {
             amount: paymentAmount,
             tx: result?.transactionHash || result?.userOpHash || "",
             currency: "USDC",
+            message,
           });
         } catch (error) {
           console.error("Failed to store transaction:", error);
@@ -254,7 +256,7 @@ export default function PaymentConfirmationScreen() {
 
           <View style={styles.messageSection}>
             <Text style={styles.messageLabel}>Message</Text>
-            <Text style={styles.message}>Here's the money I owe you.</Text>
+            <Text style={styles.message}>{message}</Text>
           </View>
         </View>
 

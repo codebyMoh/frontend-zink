@@ -64,7 +64,7 @@ useEffect(() => {
     <ScrollView style={styles.container}>
       <View>
         <ImageBackground
-          source={require("../../../assets/images/profile/profile-banner.png")}
+          source={require("../../../assets/images/profile/city-2.jpg")}
           style={styles.header}
           imageStyle={{
             borderBottomLeftRadius: 20,
@@ -223,11 +223,12 @@ copyButton: {
     borderBottomRightRadius: 20,
   },
   headerContent: {
-    height: 250,
+    // height: 250,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginTop: 30,
+    marginTop: "45%",
+    // backgroundColor: "rgba(0,0,0,0.3)",
   },
   avatar: {
     width: 70,
