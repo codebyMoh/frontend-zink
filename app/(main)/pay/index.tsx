@@ -1,8 +1,11 @@
 import { AntDesign } from "@expo/vector-icons";
 import { Stack, router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
+import { ScrollView } from "react-native";
 import {
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
   SafeAreaView,
   StyleSheet,
   Text,
@@ -91,7 +94,15 @@ export default function PaymentScreen() {
         <View style={styles.placeholder} />
       </View>
 
-      <View style={styles.content}>
+      <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+    >
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Avatar + Name */}
         <View style={styles.userInfo}>
           <View style={[styles.avatar, { backgroundColor: avatarColor }]}>
@@ -145,7 +156,8 @@ export default function PaymentScreen() {
             Payment will be sent using USDC on Base network
           </Text>
         </View>
-      </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
 
       <View style={styles.buttonContainer}>
         <TouchableOpacity
