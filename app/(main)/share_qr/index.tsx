@@ -250,7 +250,6 @@ export default function ShareQRCodeScreen() {
         {/* Content to be shared - Wrapped in ViewShot */}
         <ViewShot ref={viewShotRef} options={{ format: "png", quality: 1 }}>
           <View style={styles.shareableCardContent}>
-            {" "}
             {/* New style for the shareable portion */}
             <View style={styles.profileSection}>
               <View style={styles.profileInitialCircle}>
@@ -488,8 +487,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 10,
-    marginBottom: 20,
+    // paddingVertical: 10,
+    // marginBottom: 20,
     width: "100%",
   },
   paymentIdLabel: {

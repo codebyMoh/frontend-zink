@@ -46,7 +46,7 @@ export const storeTransaction = async (transactionData: {
 }) => {
   try {
     const token = await TokenManager.getToken();
-    // console.log("Storing transaction with data:", transactionData);
+    // console.log("Storing transaction with data:", JSON.stringify(transactionData));
     const response = await fetch(
       `${ENV.API_BASE_URL_TRANSACTION}/addTransaction`,
       {
