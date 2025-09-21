@@ -41,6 +41,9 @@ export default function QrScan() {
           recipientId: user._id,
           recipientName: user.userName,
           amount: Number(parseData?.amount) > 0 ? parseData?.amount : 0,
+          type: "tx",
+          requestSuccessId: "unknown",
+          chatMessage: "unknown",
         },
       });
     } catch (error) {

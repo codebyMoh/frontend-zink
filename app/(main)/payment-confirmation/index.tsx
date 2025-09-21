@@ -25,6 +25,7 @@ export default function PaymentConfirmationScreen() {
   const recipient = (params.recipient as string) || "Lance Whitney";
   const recipientAddress = params.recipientAddress as `0x${string}`;
   const message = (params.message as string) || "Here's the money I owe you.";
+  const type = params?.type as string;
   // console.log("Payment message:", message);
   const [isLoading, setIsLoading] = useState(false);
   const [balances, setBalances] = useState<BalanceState>({
@@ -178,6 +179,7 @@ export default function PaymentConfirmationScreen() {
             tx: result?.transactionHash || result?.userOpHash || "",
             currency: "USDC",
             message,
+            type,
           });
         } catch (error) {
           console.error("Failed to store transaction:", error);

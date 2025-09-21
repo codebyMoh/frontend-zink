@@ -18,6 +18,7 @@ export interface ApiTransaction {
   userName?: string;
   type?: string;
   requestFullFilled?: boolean;
+  isDeclined?: boolean;
   chatMessage?: string;
   __v: number;
 }
@@ -43,6 +44,44 @@ export const storeTransaction = async (transactionData: {
   tx: string;
   currency: string;
   message: string;
+  type: string;
+}) => {
+  try {
+    const token = await TokenManager.getToken();
+    // console.log("Storing transaction with data:", JSON.stringify(transactionData));
+    const response = await fetch(
+      `${ENV.API_BASE_URL_TRANSACTION}/addTransaction`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(transactionData),
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to store transaction");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Store transaction API error:", error);
+    throw error;
+  }
+};
+
+// store chat message
+export const storeChatMessage = async (transactionData: {
+  recipientId: string;
+  amount: number;
+  tx: string;
+  currency: string;
+  message: string;
+  type: string;
+  chatMessage: string;
 }) => {
   try {
     const token = await TokenManager.getToken();
@@ -227,6 +266,66 @@ export const getTransactionsForTwoUsers = async (
     return data?.data;
   } catch (error) {
     console.error("Get transactions for two users API error:", error);
+    throw error;
+  }
+};
+
+// decline requestPyament
+export const declineRequestPayment = async (id: string) => {
+  const token = await TokenManager.getToken();
+
+  const response = await fetch(
+    `${ENV.API_BASE_URL_TRANSACTION}/declineReqPayment/${id}`,
+    {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(
+      errorData.message || "Failed to fetch transactions for two users"
+    );
+  }
+  const data = await response.json();
+  return data;
+};
+
+// request payment
+export const requestPaymentStore = async (transactionData: {
+  recipientId: string;
+  amount: number;
+  tx: string;
+  currency: string;
+  message: string;
+  type: string;
+}) => {
+  try {
+    const token = await TokenManager.getToken();
+    // console.log("Storing transaction with data:", JSON.stringify(transactionData));
+    const response = await fetch(
+      `${ENV.API_BASE_URL_TRANSACTION}/addTransaction`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(transactionData),
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to store transaction");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Store transaction API error:", error);
     throw error;
   }
 };

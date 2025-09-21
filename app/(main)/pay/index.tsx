@@ -37,6 +37,7 @@ export default function PaymentScreen() {
   const recipientAddress = params.recipientAddress as string;
   const recipient = params.recipientName as string;
   const amountFromParam = params?.amount as string;
+  const type = params?.type as string;
 
   async function payHandler() {
     try {
@@ -65,6 +66,7 @@ export default function PaymentScreen() {
           recipient: params.recipientName,
           recipientAddress: params.recipientAddress,
           recipientId: params.recipientId,
+          type: type,
         },
       });
 
@@ -101,70 +103,70 @@ export default function PaymentScreen() {
       </View>
 
       <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-    >
-      <ScrollView
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
       >
-        {/* Avatar + Name */}
-        <View style={styles.userInfo}>
-          <View style={[styles.avatar, { backgroundColor: avatarColor }]}>
-            <Text style={styles.avatarText}>
-              {recipient?.charAt(0)?.toUpperCase()}
+        <ScrollView
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Avatar + Name */}
+          <View style={styles.userInfo}>
+            <View style={[styles.avatar, { backgroundColor: avatarColor }]}>
+              <Text style={styles.avatarText}>
+                {recipient?.charAt(0)?.toUpperCase()}
+              </Text>
+            </View>
+            <Text style={styles.name}>{recipient}</Text>
+            <Text style={styles.address}>{recipientAddress}</Text>
+          </View>
+
+          {/* Amount Input */}
+          <View style={styles.amountSection}>
+            <Text style={styles.sectionLabel}>Amount</Text>
+            <View style={styles.amountInputContainer}>
+              <TextInput
+                style={styles.amountInput}
+                placeholder="0.00"
+                placeholderTextColor="#ccc"
+                keyboardType="numeric"
+                value={amount}
+                onChangeText={setAmount}
+                editable={Number(amountFromParam) > 0 ? false : true}
+              />
+              <Text style={styles.currency}>USDC</Text>
+            </View>
+          </View>
+
+          <View style={styles.messageSection}>
+            <Text style={styles.sectionLabel}>Message (Optional)</Text>
+            <TextInput
+              style={styles.messageInput}
+              placeholder="Add a note..."
+              placeholderTextColor="#888"
+              value={message}
+              onChangeText={setMessage}
+              multiline={true}
+              maxLength={100}
+            />
+          </View>
+
+          {errorMessage ? (
+            <View style={styles.errorContainer}>
+              <AntDesign name="exclamationcircleo" size={16} color="#ff4444" />
+              <Text style={styles.errorMessage}>{errorMessage}</Text>
+            </View>
+          ) : null}
+
+          <View style={styles.infoContainer}>
+            <AntDesign name="infocirlceo" size={16} color="#34C759" />
+            <Text style={styles.infoText}>
+              Payment will be sent using USDC on Base network
             </Text>
           </View>
-          <Text style={styles.name}>{recipient}</Text>
-          <Text style={styles.address}>{recipientAddress}</Text>
-        </View>
-
-        {/* Amount Input */}
-        <View style={styles.amountSection}>
-          <Text style={styles.sectionLabel}>Amount</Text>
-          <View style={styles.amountInputContainer}>
-            <TextInput
-              style={styles.amountInput}
-              placeholder="0.00"
-              placeholderTextColor="#ccc"
-              keyboardType="numeric"
-              value={amount}
-              onChangeText={setAmount}
-              editable={Number(amountFromParam) > 0 ? false : true}
-            />
-            <Text style={styles.currency}>USDC</Text>
-          </View>
-        </View>
-
-        <View style={styles.messageSection}>
-          <Text style={styles.sectionLabel}>Message (Optional)</Text>
-          <TextInput
-            style={styles.messageInput}
-            placeholder="Add a note..."
-            placeholderTextColor="#888"
-            value={message}
-            onChangeText={setMessage}
-            multiline={true}
-            maxLength={100}
-          />
-        </View>
-
-        {errorMessage ? (
-          <View style={styles.errorContainer}>
-            <AntDesign name="exclamationcircleo" size={16} color="#ff4444" />
-            <Text style={styles.errorMessage}>{errorMessage}</Text>
-          </View>
-        ) : null}
-
-        <View style={styles.infoContainer}>
-          <AntDesign name="infocirlceo" size={16} color="#34C759" />
-          <Text style={styles.infoText}>
-            Payment will be sent using USDC on Base network
-          </Text>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       <View style={styles.buttonContainer}>
         <TouchableOpacity
