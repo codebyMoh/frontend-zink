@@ -1,3 +1,5 @@
+import { TokenManager } from "@/services/tokenManager";
+import { useLogout } from "@account-kit/react-native";
 import { router } from "expo-router";
 import { useState } from "react";
 import { ScrollView, StyleSheet, Text, View, TouchableOpacity, StatusBar, Modal, Pressable } from "react-native";
@@ -7,6 +9,7 @@ import Feather from "@expo/vector-icons/Feather";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialIcons } from '@expo/vector-icons';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface SettingsOptionProps {
   icon: React.ReactNode;
@@ -26,6 +29,15 @@ const SettingsOption: React.FC<SettingsOptionProps> = ({ icon, title, onPress, s
 
 export default function SettingsScreen() {
   const [modalVisible, setModalVisible] = useState(false);
+  const { logout } = useLogout();
+
+  async function signOutHandler() {
+    await TokenManager.clearAll();
+    await AsyncStorage.clear();
+    await logout();
+    router.dismissAll();
+    router.replace("/sign-in");
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -49,12 +61,12 @@ export default function SettingsScreen() {
           <SettingsOption
             icon={<Ionicons name="notifications-outline" size={24} color="#1565C0" />}
             title="Notifications & emails"
-            // onPress={() => router.push("/settings/notifications")}
+            onPress={() => router.push("/settings/notifications")}
           />
           <SettingsOption
             icon={<MaterialCommunityIcons name="shield-lock-outline" size={24} color="#1565C0" />}
             title="Privacy & security"
-            // onPress={() => router.push("/settings/privacy-security")}
+            onPress={() => router.push("/settings/privacy-security")}
           />
         </View>
 
@@ -62,21 +74,21 @@ export default function SettingsScreen() {
           <SettingsOption
             icon={<Feather name="info" size={24} color="#1565C0" />}
             title="About"
-            // onPress={() => router.push("/settings/about")}
+            onPress={() => router.push("/settings/about")}
           />
           <SettingsOption
             icon={<Ionicons name="help-circle-outline" size={24} color="#1565C0" />}
             title="Help & feedback"
-            // onPress={() => router.push("/settings/help-feedback")}
+            onPress={() => router.push("/settings/help-feedback")}
           />
           <SettingsOption
             icon={<MaterialCommunityIcons name="lock-outline" size={24} color="#1565C0" />}
             title="Lock app"
-            // onPress={() => router.push("/settings/lock-app")}
+            onPress={() => router.push("/settings/lock-app")}
           />
         </View>
 
-        <TouchableOpacity style={styles.signOutOption} onPress={() => {}}>
+        <TouchableOpacity style={styles.signOutOption} onPress={signOutHandler}>
           <Ionicons name="log-out-outline" size={24} color="#D32F2F" />
           <Text style={styles.signOutText}>Sign out</Text>
         </TouchableOpacity>
@@ -95,12 +107,14 @@ export default function SettingsScreen() {
             <TouchableOpacity style={styles.modalOption} onPress={() => {
               // Handle Get help
               setModalVisible(false);
+              router.push("/settings/help-feedback");
             }}>
               <Text style={styles.modalOptionText}>Get help</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.modalOption} onPress={() => {
               // Handle Send feedback
               setModalVisible(false);
+              router.push("/settings/help-feedback");
             }}>
               <Text style={styles.modalOptionText}>Send feedback</Text>
             </TouchableOpacity>

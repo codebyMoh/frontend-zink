@@ -11,6 +11,7 @@ import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import { AlchemyAuthSessionProvider } from "@src/context/AlchemyAuthSessionProvider";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { AppLockProvider } from "@/src/components/AppLockProvider";
 
 export { ErrorBoundary } from "expo-router";
 
@@ -45,6 +46,7 @@ export default function RootLayout() {
 
 function RootLayoutNav() {
   return (
+    <AppLockProvider>
     <AlchemyAuthSessionProvider>
       <Stack
         screenOptions={{
@@ -64,5 +66,6 @@ function RootLayoutNav() {
         <Stack.Screen name="(main)" options={{ headerShown: false }} />
       </Stack>
     </AlchemyAuthSessionProvider>
+    </AppLockProvider>
   );
 }

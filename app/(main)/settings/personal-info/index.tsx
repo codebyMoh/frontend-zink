@@ -1,5 +1,3 @@
-// app/(main)/settings/personal-info/index.tsx
-
 import { TokenManager } from "@/services/tokenManager";
 import { useUser } from "@account-kit/react-native";
 import AntDesign from "@expo/vector-icons/AntDesign";
@@ -16,7 +14,6 @@ import {
   StatusBar,
   Modal,
   Pressable,
-  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -24,11 +21,10 @@ interface InfoRowProps {
   icon: React.ReactNode;
   label: string;
   value: string;
-  showEdit?: boolean;
   onEditPress?: () => void;
 }
 
-const InfoRow: React.FC<InfoRowProps> = ({ icon, label, value, showEdit = false, onEditPress }) => (
+const InfoRow: React.FC<InfoRowProps> = ({ icon, label, value, onEditPress }) => (
   <View style={styles.infoRow}>
     <View style={styles.infoLeft}>
       {icon}
@@ -37,11 +33,6 @@ const InfoRow: React.FC<InfoRowProps> = ({ icon, label, value, showEdit = false,
         <Text style={styles.infoValue}>{value}</Text>
       </View>
     </View>
-    {showEdit && (
-      <TouchableOpacity onPress={onEditPress} style={styles.editButton}>
-        <Text style={styles.editText}>Edit</Text>
-      </TouchableOpacity>
-    )}
   </View>
 );
 
@@ -49,7 +40,6 @@ export default function PersonalInfoScreen() {
   const user = useUser();
   const [modalVisible, setModalVisible] = useState(false);
   const [userName, setUserName] = useState("Jhone Doe");
-  const [userPhone, setUserPhone] = useState("+91 98765 43210");
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -57,18 +47,9 @@ export default function PersonalInfoScreen() {
       if (userData?.userName) {
         setUserName(userData.userName);
       }
-      // You can load phone number from your user data as well
-      if (userData?.phoneNumber) {
-        setUserPhone(userData.phoneNumber);
-      }
     };
     loadUserData();
   }, []);
-
-  const handleEditMobile = () => {
-    // Navigate to edit mobile screen or show edit modal
-    console.log("Edit mobile number");
-  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -90,11 +71,9 @@ export default function PersonalInfoScreen() {
         <View style={styles.profileSection}>
           <View style={styles.profileImageContainer}>
             <View style={styles.profileImage}>
-              {/* You can replace this with actual image if available */}
-              <Image 
-                source={{ uri: 'https://via.placeholder.com/120x120/333333/FFFFFF?text=' + userName?.charAt(0)?.toUpperCase() }}
-                style={styles.profileImageStyle}
-              />
+              <Text style={styles.profileInitial}>
+                {userName?.charAt(0)?.toUpperCase() || "J"}
+              </Text>
             </View>
             <TouchableOpacity style={styles.editImageButton}>
               <Ionicons name="pencil" size={16} color="#fff" />
@@ -102,14 +81,12 @@ export default function PersonalInfoScreen() {
           </View>
         </View>
 
-        {/* Info Section */}
+        {/* Info Section - Username and Email */}
         <View style={styles.infoSection}>
           <InfoRow
-            icon={<Ionicons name="phone-portrait-outline" size={24} color="#1565C0" />}
-            label="Mobile number"
-            value={userPhone}
-            showEdit={true}
-            onEditPress={handleEditMobile}
+            icon={<Ionicons name="person-outline" size={24} color="#1565C0" />}
+            label="Username"
+            value={userName}
           />
           
           <InfoRow
@@ -193,15 +170,14 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: "#333",
+    backgroundColor: "#5d4038",
     justifyContent: "center",
     alignItems: "center",
-    overflow: "hidden",
   },
-  profileImageStyle: {
-    width: "100%",
-    height: "100%",
-    borderRadius: 60,
+  profileInitial: {
+    fontSize: 48,
+    fontWeight: "bold",
+    color: "#ffffff",
   },
   editImageButton: {
     position: "absolute",
@@ -263,7 +239,6 @@ const styles = StyleSheet.create({
     color: "#1565C0",
     fontWeight: "500",
   },
-  // Modal styles
   centeredView: {
     flex: 1,
     justifyContent: "flex-start",
