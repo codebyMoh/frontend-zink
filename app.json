@@ -21,7 +21,7 @@
         "origin": false
       },
       "eas": {
-        "projectId": "3592ebff-74c4-40dd-b9a4-de48e5dc9f11"
+        "projectId": "64177064-64f0-4720-a3ec-9df10e2701d7"
       }
     },
     "ios": {
@@ -33,7 +33,10 @@
         "foregroundImage": "./assets/images/logos/Zink-Qr-Logo.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.zink.app"
+      "package": "com.zink.app",
+      "permissions": [
+        "android.permission.CAMERA"
+      ]
     },
     "web": {
       "bundler": "metro",
