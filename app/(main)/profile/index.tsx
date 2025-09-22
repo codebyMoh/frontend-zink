@@ -134,10 +134,12 @@ export default function ProfileScreen() {
               icon={<MaterialCommunityIcons name="refresh-auto" size={24} color="#1565C0" />}
               title="Autopay"
               subtitle="No pending requests"
+              onPress={() => router.push("/autopay")}
             />
             <ProfileOption
               icon={<Ionicons name="settings-outline" size={24} color="#1565C0" />}
               title="Settings"
+              onPress={() => router.push("/settings")}
             />
             <ProfileOption
               icon={<FontAwesome6 name="user-circle" size={24} color="#1565C0" />}
@@ -146,10 +148,12 @@ export default function ProfileScreen() {
             <ProfileOption
               icon={<Feather name="help-circle" size={24} color="#1565C0" />}
               title="Get help"
+              onPress={() => router.push("/get_help")}
             />
             <ProfileOption
               icon={<Fontisto name="world-o" size={24} color="#1565C0" />}
               title="Language"
+              onPress={() => router.push("/language")}
             />
           </View>
 
