@@ -322,14 +322,6 @@ const TransactionHistoryScreen: React.FC = () => {
           <TouchableOpacity
             key={transaction.id}
             style={styles.transactionItem}
-            // onPress={() => {
-            //   // TODO: add navigation to transaction details here
-            //   Alert.alert(
-            //     'Transaction Details',
-            //     `Transaction Hash: ${transaction.txHash}\nAmount: ${transaction.amount} ${transaction.currency}\nDate: ${transaction.date}`,
-            //   );
-            // }}
-
             onPress={() => {
               router.push({
                 pathname: "/transaction_details",

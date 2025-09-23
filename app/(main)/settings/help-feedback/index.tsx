@@ -40,23 +40,17 @@ export default function HelpFeedbackScreen() {
           <HelpOption
             icon={<Ionicons name="help-circle-outline" size={24} color="#1565C0" />}
             title="Get help"
-            onPress={() => {
-              // handle Get help navigation
-            }}
+            onPress={() => router.push("/settings/help-feedback/get-help")}
           />
           <HelpOption
             icon={<MaterialCommunityIcons name="message-text-outline" size={24} color="#1565C0" />}
             title="Send feedback"
-            onPress={() => {
-              // handle Send feedback navigation
-            }}
+            onPress={() => router.push("/settings/help-feedback/send-feedback")}
           />
           <HelpOption
             icon={<MaterialCommunityIcons name="file-document-outline" size={24} color="#1565C0" />}
             title="Raise BBPS dispute"
-            onPress={() => {
-              // handle BBPS dispute navigation
-            }}
+            // onPress={() => router.push("/settings/help-feedback/bbps-dispute")}
           />
         </View>
       </ScrollView>

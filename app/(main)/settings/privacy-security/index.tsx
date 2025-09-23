@@ -127,7 +127,7 @@ export default function PrivacySecurityScreen() {
             title="How people find you on Zink"
             subtitle="Manage your profile preferences"
             onPress={() => {
-              // router.push("/settings/privacy-security/how-people-find-you");
+              router.push("/settings/privacy-security/how-people-find-you");
             }}
             showChevron={true}
           />
