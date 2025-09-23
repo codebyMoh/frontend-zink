@@ -21,7 +21,7 @@ extensions.configure(com.facebook.react.ReactSettingsExtension) { ex ->
   }
 }
 
-rootProject.name = 'account-kit-expo-quickstart'
+rootProject.name = 'Zink'
 
 dependencyResolutionManagement {
   versionCatalogs {

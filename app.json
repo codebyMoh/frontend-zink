@@ -34,9 +34,7 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.zink.app",
-      "permissions": [
-        "android.permission.CAMERA"
-      ]
+      "permissions": ["android.permission.CAMERA"]
     },
     "web": {
       "bundler": "metro",
@@ -50,6 +48,10 @@
         {
           "ios": {
             "deploymentTarget": "17.0"
+          },
+          "android": {
+            "compileSdkVersion": 36,
+            "targetSdkVersion": 36
           }
         }
       ],

@@ -1,4 +1,4 @@
-package com.alchemy.accountkitexpoquickstart
+package com.zink.app
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build
