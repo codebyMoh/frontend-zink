@@ -9,7 +9,7 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/images/splash-icon.png",
+      "image": "./assets/images/logos/Zink-Logo.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -30,7 +30,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/logos/Zink-Qr-Logo.png",
+        "foregroundImage": "./assets/images/logos/Zink-Logo.png",
         "backgroundColor": "#ffffff"
       },
       "package": "com.zink.app",
@@ -39,7 +39,7 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/logos/Zink-Logo.png"
     },
     "plugins": [
       "expo-router",
